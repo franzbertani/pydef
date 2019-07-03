@@ -1,0 +1,20 @@
+# type: all C single variable types, plus array, plus structs
+# arrays are defined as type[size]
+
+TASKS:
+    - id: linreg
+      in_set: []
+      output:
+          name: ta_out
+          type: int
+      e_bc: 300
+      e_wc: 450
+    - id: task_1
+      in_set:
+          - task_id: task_a
+            dependency_type: simple
+      output:
+          name: t1_output
+          type: int
+      e_bc: 100
+      e_wc: 150
