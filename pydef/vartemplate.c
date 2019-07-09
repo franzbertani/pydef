@@ -5,6 +5,6 @@ struct TASK_struct {
     short int write_index;
     char is_full;
 };
-struct TASK_struct var_struct_TASK = {.size = VERSIONS_COUNT, .window_begin_index = 0, .write_index = 0, .is_full = 0};
+struct __attribute__ ((persistent)) TASK_struct var_struct_TASK = {.size = VERSIONS_COUNT, .window_begin_index = 0, .write_index = 0, .is_full = 0};
 TYPE g_TASK;
 

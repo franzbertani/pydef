@@ -49,6 +49,8 @@ class Tasks:
             Returns:
                 A boolean value.
         """
+        # sostituire il for con un for su iter e chiave,valore
+        # perche' e' piu' efficiente
         for task_id in self.tasks_dict:
             task_dependencies = [
                 dep.task_id for dep in self.tasks_dict[task_id].in_set]

@@ -15,3 +15,12 @@ TASKS:
           type: int
       e_bc: 100
       e_wc: 150
+    - id: task_2
+      in_set:
+          - task_id: task_a
+            dependency_type: simple
+      output:
+          name: t2_output
+          type: int
+      e_bc: 100
+      e_wc: 150

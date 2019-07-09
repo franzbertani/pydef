@@ -20,6 +20,12 @@ def read_yaml_file(file_path):
     return config_dict
 
 
+def is_dangerous(output_type):
+    if output_type.endswith("*"):
+        return True
+    return False
+
+
 T = Tasks()
 d = read_yaml_file("example.yaml")
 T.build_tasks_dict(d)
@@ -29,10 +35,18 @@ if not T.check_dependencies_consistency():
     exit()
 
 T.build_tasks_graph()
+G = T.get_tasks_graph()
+
+warnings = False
+
+for node in G.nodes():
+    if G.out_degree(node)>1 and is_dangerous(T.get_tasks_dict()[node].output.type):
+        #check consistency
+        print("WARNING: potential hidden dependency from %s" %(node))
 
 H = Header()
 T.generate_tasks_defines(H)
 H.write_file("header.h")
 
-nx.draw(T.get_tasks_graph(), with_labels=True)
-plt.show()
+# nx.draw(T.get_tasks_graph(), with_labels=True)
+# plt.show()

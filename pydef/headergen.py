@@ -6,6 +6,7 @@ class Header:
     def write_file(self, file_path):
         with open(file_path, "w") as output:
             output.write("\n".join(self.lines))
+
             #then add helper functions
             with open("helper_functions.c", "r") as infile:
                 helper_functions = infile.read()
