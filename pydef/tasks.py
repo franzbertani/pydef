@@ -49,11 +49,8 @@ class Tasks:
             Returns:
                 A boolean value.
         """
-        # sostituire il for con un for su iter e chiave,valore
-        # perche' e' piu' efficiente
-        for task_id in self.tasks_dict:
-            task_dependencies = [
-                dep.task_id for dep in self.tasks_dict[task_id].in_set]
+        for task_id, task_props in self.tasks_dict.items():
+            task_dependencies = (dep.task_id for dep in task_props.in_set)
             for dep_id in task_dependencies:
                 if dep_id not in self.tasks_dict:
                     print("ERROR: unsatisfied dependency %s -> %s" %
@@ -77,19 +74,19 @@ class Tasks:
     def build_tasks_graph(self):
         for task_id in self.tasks_dict:
             self.tasks_graph.add_node(task_id)
-        for task_id in self.tasks_dict:
-            self.tasks_graph.add_edges_from([(dep.task_id, task_id)
-                                             for dep in self.tasks_dict[task_id].in_set])
+        for task_id, task_props in self.tasks_dict.items():
+            self.tasks_graph.add_edges_from(
+                [(dep.task_id, task_id) for dep in task_props.in_set])
 
     def add_tasks_variables_declarations(self, header):
         declarations_list = []
         var_template = ""
         with open("vartemplate.c") as template_file:
             var_template = template_file.read().replace("\n", "\t\\\n\t")
-        for task_id in self.tasks_dict:
+        for task_id, task_props in self.tasks_dict.items():
             task_struct = (var_template
                            .replace("TASK", task_id)
-                           .replace("TYPE", self.tasks_dict[task_id].output.type)
+                           .replace("TYPE", task_props.output.type)
                            .replace("VERSIONS_COUNT", "1"))
             header.add_define((task_id + "_output_var", task_struct))
             declarations_list.append(task_id + "_output_var")
@@ -116,10 +113,11 @@ class Tasks:
     def add_tasks_returns(self, header):
         template = ""
         with open("return_template.c") as template_file:
-            template = template_file.read().replace("\n","\t\\\n\t")
-        for task in self.tasks_dict:
-            define_key = "RETURN_%s" % (task)
-            define_value = template.replace("TASK", task).replace("LOCAL_VAR", self.tasks_dict[task].output.name)
+            template = template_file.read().replace("\n", "\t\\\n\t")
+        for task_id, task_props in self.tasks_dict.items():
+            define_key = "RETURN_%s" % (task_id)
+            define_value = template.replace("TASK", task_id).replace(
+                "LOCAL_VAR", task_props.output.name)
             # define_value = "g_%s = %s;\t\\\n\treturn;" % (
             #     task, self.tasks_dict[task].output.name)
             header.add_define((define_key, define_value))
