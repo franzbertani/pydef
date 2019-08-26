@@ -7,6 +7,20 @@ from tasks import Tasks
 
 
 def read_yaml_file(file_path):
+    """Build a dictionary from the YAML config file
+
+    Parameters
+    ----------
+
+    file_path : str
+        Path to the YAML configuration file
+
+    Returns
+    -------
+
+    dict
+        A dictionary storing the configuration
+    """
     config_dict = {}
     try:
         with open(file_path) as stream:
@@ -21,10 +35,18 @@ def read_yaml_file(file_path):
 
 
 def is_dangerous(output_type):
+    """Tells if an output type may pose a threat to consistency
+
+    Not really implemented, just a stub
+    """
     if output_type.endswith("*"):
         return True
     return False
 
+
+"""
+ENTRY POINT
+"""
 
 T = Tasks()
 d = read_yaml_file("example.yaml")
@@ -40,9 +62,9 @@ G = T.get_tasks_graph()
 warnings = False
 
 for node in G.nodes():
-    if G.out_degree(node)>1 and is_dangerous(T.get_tasks_dict()[node].output.type):
-        #check consistency
-        print("WARNING: potential hidden dependency from %s" %(node))
+    if G.out_degree(node) > 1 and is_dangerous(T.get_tasks_dict()[node].output.type):
+        # check consistency
+        print("WARNING: potential hidden dependency from %s" % (node))
 
 H = Header()
 T.generate_tasks_defines(H)

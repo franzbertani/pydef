@@ -10,6 +10,7 @@ Task = namedtuple("Task", "id in_set output e_bc e_wc")
 
 
 class Tasks:
+    """A class to store set of tasks"""
 
     def __init__(self):
         self.tasks_dict = {}
@@ -24,11 +25,16 @@ class Tasks:
     def check_task_consistency(self, new_task):
         """Check if the new task is compatible with the existing ones.
 
-            Args:
-                new_taks: the Task named tuple of the new task
+        Parameters
+        ----------
 
-            Returns:
-                A boolean value.
+        new_taks: collections.namedtuple Task
+            the Task named tuple of the new task
+
+        Returns
+        -------
+        bool
+            True if the task has been succesfully added, False otherwise
         """
         if new_task.id in self.tasks_dict:
             print("ERROR: tasks id must be unique (%s)" % (new_task.id))
@@ -43,11 +49,12 @@ class Tasks:
     def check_dependencies_consistency(self):
         """Check if the task list is consistent.
 
-            In particular this function checks if all the in set of tasks
-            are variables produced by existing tasks.
+        It checks if all the in set of tasks are variables
+        produced by existing tasks.
 
-            Returns:
-                A boolean value.
+        Returns
+        -------
+        bool
         """
         for task_id, task_props in self.tasks_dict.items():
             task_dependencies = (dep.task_id for dep in task_props.in_set)
@@ -59,6 +66,14 @@ class Tasks:
         return True
 
     def build_tasks_dict(self, config_dict):
+        """It creates the task dictionary from the config dictionary
+
+        Parameters
+        ----------
+
+        config_dict : dict
+            configuration dictionary as produced by `read_yaml_file` function
+        """
         for task in config_dict["TASKS"]:
             new_task = Task(
                 id=task["id"],
@@ -72,6 +87,10 @@ class Tasks:
                 print("WARN: skipped task %s" % (new_task.id))
 
     def build_tasks_graph(self):
+        """Builds a networkx graph from the task dictionary
+
+        It must be used AFTER `build_task_dict`
+        """
         for task_id in self.tasks_dict:
             self.tasks_graph.add_node(task_id)
         for task_id, task_props in self.tasks_dict.items():
@@ -79,6 +98,14 @@ class Tasks:
                 [(dep.task_id, task_id) for dep in task_props.in_set])
 
     def add_tasks_variables_declarations(self, header):
+        """Generates the header define to declare tasks variables
+
+        Parameters
+        ----------
+
+        header : Header
+            an Header object
+        """
         declarations_list = []
         var_template = ""
         with open("vartemplate.c") as template_file:
@@ -94,6 +121,14 @@ class Tasks:
                            "\t\\\n\t".join(declarations_list)))
 
     def add_tasks_begin_declarations(self, header):
+        """Generates the header define to begin a task based on tasks dict
+
+        Parameters
+        ----------
+
+        header : Header
+            an Header object
+        """
         for task in self.tasks_dict:
             define_key = "BEGIN_TASK_%s" % (task)
             define_value = []
@@ -108,9 +143,25 @@ class Tasks:
             header.add_define((define_key, "\t\\\n\t".join(define_value)))
 
     def add_tasks_end(self, header):
+        """Generates the header define to end a task based on tasks dict
+
+        Parameters
+        ----------
+
+        header : Header
+            an Header object
+        """
         header.add_define(("END_TASK", "}\n"))
 
     def add_tasks_returns(self, header):
+        """Generates the header define for tasks return statement
+
+        Parameters
+        ----------
+
+        header : Header
+            an Header object
+        """
         template = ""
         with open("return_template.c") as template_file:
             template = template_file.read().replace("\n", "\t\\\n\t")
@@ -123,6 +174,14 @@ class Tasks:
             header.add_define((define_key, define_value))
 
     def generate_tasks_defines(self, header):
+        """Creates the tasks defines by running the needed methods in the correct order
+
+        Parameters
+        ----------
+
+        header : Header
+            an Header object
+        """
         self.add_tasks_variables_declarations(header)
         self.add_tasks_begin_declarations(header)
         self.add_tasks_returns(header)
