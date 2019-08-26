@@ -173,6 +173,12 @@ class Tasks:
             #     task, self.tasks_dict[task].output.name)
             header.add_define((define_key, define_value))
 
+    def add_tasks_array(self, header):
+        tasks = ", ".join(self.tasks_dict.keys())
+        string = "void __attribute__ ((persistent)) (*task_array[%s])() = {%s};" %(len(self.tasks_dict), tasks)
+        header.add_define(("TASK_ARRAY", string))
+
+
     def generate_tasks_defines(self, header):
         """Creates the tasks defines by running the needed methods in the correct order
 
@@ -186,3 +192,5 @@ class Tasks:
         self.add_tasks_begin_declarations(header)
         self.add_tasks_returns(header)
         self.add_tasks_end(header)
+        self.add_tasks_array(header)
+        header.add_define(("TASKS_COUNT", len(self.tasks_dict)))

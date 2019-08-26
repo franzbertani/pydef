@@ -15,12 +15,18 @@ TASKS:
           type: int
       e_bc: 100
       e_wc: 150
-    - id: task_2
-      in_set:
-          - task_id: task_a
-            dependency_type: simple
-      output:
-          name: t2_output
-          type: int
-      e_bc: 100
-      e_wc: 150
+    # - id: task_2
+    #   in_set:
+    #       - task_id: task_a
+    #         dependency_type: simple
+    #   output:
+    #       name: t2_output
+    #       type: int
+    #   e_bc: 100
+    #   e_wc: 150
+APPLICATIONS:
+    - id: app_1
+      tasks: [task_a, task_1]
+      initial_task: task_a
+      x_min: 1
+

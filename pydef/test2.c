@@ -30,7 +30,8 @@ BEGIN_TASK_task_1
     RETURN_task_1
 END_TASK
 
-void __attribute__ ((persistent)) (*task_array[2])() = {task_a, task_1};
+/* void __attribute__ ((persistent)) (*task_array[2])() = {task_a, task_1}; */
+TASK_ARRAY
 
 void scheduler(){
     if(seen_resets != resets){

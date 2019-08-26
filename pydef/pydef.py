@@ -4,6 +4,7 @@ from headergen import Header
 import networkx as nx
 from matplotlib import pyplot as plt
 from tasks import Tasks
+from applications import Applications
 
 
 def read_yaml_file(file_path):
@@ -49,8 +50,10 @@ ENTRY POINT
 """
 
 T = Tasks()
+A = Applications()
 d = read_yaml_file("example.yaml")
 T.build_tasks_dict(d)
+A.build_apps_dict(d, T.get_tasks_dict())
 
 if not T.check_dependencies_consistency():
     print("ERROR: can not procede due to tasks inconsisntency")
@@ -68,6 +71,7 @@ for node in G.nodes():
 
 H = Header()
 T.generate_tasks_defines(H)
+A.generate_apps_defines(H)
 H.write_file("header.h")
 
 # nx.draw(T.get_tasks_graph(), with_labels=True)

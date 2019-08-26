@@ -18,6 +18,7 @@ class Header:
         """
         with open(file_path, "w") as output:
             output.write("\n".join(self.lines))
+            output.write("\n")
 
             # then add helper functions
             with open("helper_functions.c", "r") as infile:
@@ -34,7 +35,7 @@ class Header:
             A tuple storing the key and the value of the new define.
             e.g. (A, 42) produces `#DEFINE A 42`
         """
-        self.lines.append("#define %s %s" % (define_tuple[0], define_tuple[1]))
+        self.lines.append("#define %s %s" % define_tuple)
 
     def add_line(self, define_string):
         """Add a line as is to the header
