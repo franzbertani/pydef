@@ -30,10 +30,13 @@ BEGIN_TASK_task_1
     RETURN_task_1
 END_TASK
 
-/* void __attribute__ ((persistent)) (*task_array[2])() = {task_a, task_1}; */
+TASKS_STRUCTS
 TASK_ARRAY
+APP_STRUCTS
+APP_ARRAY
 
 void scheduler(){
+    task_struct_t next_task_struct;
     if(seen_resets != resets){
         seen_resets = resets;
         if(next_task == 1){
@@ -42,7 +45,8 @@ void scheduler(){
         }
     }
     while(1){
-        (*task_array[next_task])();
+        next_task_struct = *(task_array[next_task]);
+        (next_task_struct.function_pointer)();
         next_task = (next_task+1) % 2;
         siren_command("RESET: a\n");
     }

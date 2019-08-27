@@ -1,3 +1,6 @@
+helper_functions = "templates/helper_functions.c"
+struct_templates = "templates/struct_templates.c"
+
 class Header:
     """This class is an abstraction of the header file
 
@@ -17,13 +20,16 @@ class Header:
             Path to the desired write location
         """
         with open(file_path, "w") as output:
+            with open(struct_templates, "r") as st:
+                lines = st.read()
+                output.writelines(lines)
             output.write("\n".join(self.lines))
             output.write("\n")
 
             # then add helper functions
-            with open("helper_functions.c", "r") as infile:
-                helper_functions = infile.read()
-                output.write(helper_functions)
+            with open(helper_functions, "r") as infile:
+                template = infile.read()
+                output.write(template)
 
     def add_define(self, define_tuple):
         """Add a new define to the header file

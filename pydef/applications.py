@@ -1,5 +1,8 @@
 from collections import namedtuple
 
+app_struct_define = "templates/app_struct_define.c"
+app_array_define = "templates/app_array_template.c"
+
 
 class Application:
 
@@ -46,6 +49,9 @@ class Application:
             return
         self._initial_task = task_id
 
+    def get_initial_task(self):
+        return self._initial_task
+
 
 class Applications:
 
@@ -73,5 +79,52 @@ class Applications:
             new_app.set_initial_task(app["initial_task"])
             self.apps_dict[app["id"]] = new_app
 
+    def add_apps_structs(self, header):
+        """Generates the header defines to declare an app struct for each app
+
+        Parameters
+        ----------
+
+        header : Header
+            an Header object
+        """
+        with open(app_struct_define, "r") as asd:
+            template = asd.read().replace("\n", "")
+        structs = []
+        for k, v in self.apps_dict.items():
+           app_define = template.replace("APP", k)
+           app_define = app_define.replace("TP", str(v.x_min))
+           app_define = app_define.replace("TASKS_COUNT", str(len(v.tasks_dict)))
+           tasks = ["&task_struct_%s" %(x,) for x in v.tasks_dict]
+           tasks_string = ", ".join(tasks)
+           app_define = app_define.replace("TASKS", tasks_string)
+           app_define = app_define.replace("INITIAL_TASK", "&task_struct_%s" %(v.get_initial_task(),))
+           structs.append(app_define)
+        define_string = "\t\\\n\t".join(structs)
+        print(define_string)
+        header.add_define(("APP_STRUCTS", define_string))
+
+
+    def add_apps_array(self, header):
+        """Generates the header defines to declare app related array
+
+        It generates the declarations for the app array and the active apps array
+
+        Parameters
+        ----------
+
+        header : Header
+            an Header object
+        """
+        with open(app_array_define, "r") as aad:
+            template = aad.read().replace("\n", "\t\\\n\t")
+        template = template.replace("APP_COUNT", str(len(self.apps_dict)))
+        apps = ["&app_struct_%s" %(x,) for x in self.apps_dict]
+        apps_string = ", ".join(apps)
+        template = template.replace("APP_STRUCTS", apps_string)
+        header.add_define(("APP_ARRAY", template))
+
     def generate_apps_defines(self, header):
         header.add_define(("APPS_COUNT", len(self.apps_dict)))
+        self.add_apps_structs(header)
+        self.add_apps_array(header)

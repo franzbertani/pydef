@@ -8,6 +8,11 @@ Variable = namedtuple("Variable", "name type")
 Dependency = namedtuple("Dependency", "task_id dependency_type")
 Task = namedtuple("Task", "id in_set output e_bc e_wc")
 
+variable_struct_template = "templates/variable_struct_template.c"
+return_template = "templates/return_template.c"
+tasks_array = "templates/tasks_array_template.c"
+task_struct_template = "templates/tasks_struct_define.c"
+
 
 class Tasks:
     """A class to store set of tasks"""
@@ -108,7 +113,7 @@ class Tasks:
         """
         declarations_list = []
         var_template = ""
-        with open("vartemplate.c") as template_file:
+        with open(variable_struct_template, "r") as template_file:
             var_template = template_file.read().replace("\n", "\t\\\n\t")
         for task_id, task_props in self.tasks_dict.items():
             task_struct = (var_template
@@ -163,7 +168,7 @@ class Tasks:
             an Header object
         """
         template = ""
-        with open("return_template.c") as template_file:
+        with open(return_template, "r") as template_file:
             template = template_file.read().replace("\n", "\t\\\n\t")
         for task_id, task_props in self.tasks_dict.items():
             define_key = "RETURN_%s" % (task_id)
@@ -173,11 +178,47 @@ class Tasks:
             #     task, self.tasks_dict[task].output.name)
             header.add_define((define_key, define_value))
 
-    def add_tasks_array(self, header):
-        tasks = ", ".join(self.tasks_dict.keys())
-        string = "void __attribute__ ((persistent)) (*task_array[%s])() = {%s};" %(len(self.tasks_dict), tasks)
-        header.add_define(("TASK_ARRAY", string))
+    def add_tasks_structs(self, header):
+        topological_order = nx.topological_sort(self.tasks_graph)
+        with open(task_struct_template, "r") as ts:
+            template = ts.read().replace("\n", "")
+        structs = []
+        for task in topological_order:
+            task_id = str(task)
+            predecessors = self.tasks_graph.predecessors(task)
+            predecessors_list = ["&task_struct_%s" %(x,) for x in predecessors]
+            predecessors_string = ", ".join(predecessors_list)
 
+            task_struct_define = template.replace("TASK", task_id)
+            task_struct_define = task_struct_define.replace("ENERGY", str(self.tasks_dict[task_id].e_wc))
+            task_struct_define = task_struct_define.replace("DEPENDENCIES_COUNT", str(len(predecessors_list)))
+            task_struct_define = task_struct_define.replace("DEPENDENCIES", predecessors_string)
+            task_struct_define = task_struct_define.replace("POINTER", "&%s" %(task_id,))
+            structs.append(task_struct_define)
+        define_string = "\t\\\n\t".join(structs)
+        print(define_string)
+        header.add_define(("TASKS_STRUCTS", define_string))
+
+
+    def add_tasks_array(self, header):
+        """Generates the header define to declare an array of tasks pointers
+
+        Parameters
+        ----------
+
+        header : Header
+            an Header object
+        """
+        tasks = ["&task_struct_%s" % (x,) for x in self.tasks_dict.keys()]
+        tasks_string = ", ".join(tasks)
+
+        with open(tasks_array, "r") as ta:
+            array_template = ta.read().replace("\n", "\t\\\n\t")
+
+        array_template = array_template.replace("TASKS_COUNT", str(
+            len(self.tasks_dict))).replace("TASKS_STRUCTS", tasks_string)
+
+        header.add_define(("TASK_ARRAY", array_template))
 
     def generate_tasks_defines(self, header):
         """Creates the tasks defines by running the needed methods in the correct order
@@ -192,5 +233,6 @@ class Tasks:
         self.add_tasks_begin_declarations(header)
         self.add_tasks_returns(header)
         self.add_tasks_end(header)
+        self.add_tasks_structs(header)
         self.add_tasks_array(header)
         header.add_define(("TASKS_COUNT", len(self.tasks_dict)))
