@@ -71,7 +71,8 @@ class Applications:
         """
         for app in config_dict["APPLICATIONS"]:
             if app["id"] in self.apps_dict:
-                print("ERROR: app id must be unique, %s duplicated" % (app["id"],))
+                print("ERROR: app id must be unique, %s duplicated" %
+                      (app["id"],))
                 continue
             new_app = Application(app["id"])
             new_app.x_min = app.get("x_min", 0)
@@ -92,18 +93,19 @@ class Applications:
             template = asd.read().replace("\n", "")
         structs = []
         for k, v in self.apps_dict.items():
-           app_define = template.replace("APP", k)
-           app_define = app_define.replace("TP", str(v.x_min))
-           app_define = app_define.replace("TASKS_COUNT", str(len(v.tasks_dict)))
-           tasks = ["&task_struct_%s" %(x,) for x in v.tasks_dict]
-           tasks_string = ", ".join(tasks)
-           app_define = app_define.replace("TASKS", tasks_string)
-           app_define = app_define.replace("INITIAL_TASK", "&task_struct_%s" %(v.get_initial_task(),))
-           structs.append(app_define)
+            app_define = template.replace("APP", k)
+            app_define = app_define.replace("TP", str(v.x_min))
+            app_define = app_define.replace(
+                "TASKS_COUNT", str(len(v.tasks_dict)))
+            tasks = ["&task_struct_%s" % (x,) for x in v.tasks_dict]
+            tasks_string = ", ".join(tasks)
+            app_define = app_define.replace("TASKS", tasks_string)
+            app_define = app_define.replace(
+                "INITIAL_TASK", "&task_struct_%s" % (v.get_initial_task(),))
+            structs.append(app_define)
         define_string = "\t\\\n\t".join(structs)
         print(define_string)
         header.add_define(("APP_STRUCTS", define_string))
-
 
     def add_apps_array(self, header):
         """Generates the header defines to declare app related array
@@ -119,7 +121,9 @@ class Applications:
         with open(app_array_define, "r") as aad:
             template = aad.read().replace("\n", "\t\\\n\t")
         template = template.replace("APP_COUNT", str(len(self.apps_dict)))
-        apps = ["&app_struct_%s" %(x,) for x in self.apps_dict]
+        sorted_apps = [x[0] for x in sorted(
+            self.apps_dict.items(), key=lambda x: x[1].x_min, reverse=True)]
+        apps = ["&app_struct_%s" % (x,) for x in sorted_apps]
         apps_string = ", ".join(apps)
         template = template.replace("APP_STRUCTS", apps_string)
         header.add_define(("APP_ARRAY", template))

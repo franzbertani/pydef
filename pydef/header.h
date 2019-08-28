@@ -76,6 +76,8 @@ typedef struct app_struct {
 #define TASKS_STRUCTS task_struct_t __attribute__ ((persistent)) task_struct_task_a = {.e_wc = 450.0, .in_set = {}, .in_set_count = 0, .function_pointer = &task_a};	\
 	task_struct_t __attribute__ ((persistent)) task_struct_task_1 = {.e_wc = 150.0, .in_set = {&task_struct_task_a}, .in_set_count = 1, .function_pointer = &task_1};
 #define TASK_ARRAY task_struct_t* __attribute__ ((persistent)) task_array[2] = {&task_struct_task_a, &task_struct_task_1};	\
+	app_struct_t* __attribute__ ((persistent)) active_task_array[2];	\
+	app_struct_t* __attribute__ ((persistent)) enabled_task_array[2];	\
 	
 #define TASKS_COUNT 2
 #define APPS_COUNT 1
