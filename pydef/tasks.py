@@ -179,6 +179,14 @@ class Tasks:
             header.add_define((define_key, define_value))
 
     def add_tasks_structs(self, header):
+        """Generates the header define to declare tasks structures
+
+        Parameters
+        ----------
+
+        header : Header
+            an Header object
+        """
         topological_order = nx.topological_sort(self.tasks_graph)
         with open(task_struct_template, "r") as ts:
             template = ts.read().replace("\n", "")
