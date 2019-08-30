@@ -223,7 +223,7 @@ class Tasks:
         with open(tasks_array, "r") as ta:
             array_template = ta.read().replace("\n", "\t\\\n\t")
 
-        array_template = array_template.replace("TASKS_COUNT", str(
+        array_template = array_template.replace("TASK_COUNT", str(
             len(self.tasks_dict))).replace("TASKS_STRUCTS", tasks_string)
 
         header.add_define(("TASK_ARRAY", array_template))
@@ -243,4 +243,4 @@ class Tasks:
         self.add_tasks_end(header)
         self.add_tasks_structs(header)
         self.add_tasks_array(header)
-        header.add_define(("TASKS_COUNT", len(self.tasks_dict)))
+        header.add_define(("TASK_COUNT", len(self.tasks_dict)))
