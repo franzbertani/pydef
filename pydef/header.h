@@ -76,17 +76,20 @@ typedef struct app_struct {
 #define TASKS_STRUCTS task_struct_t __attribute__ ((persistent)) task_struct_task_a = {.e_wc = 450.0, .in_set = {}, .in_set_count = 0, .function_pointer = &task_a};	\
 	task_struct_t __attribute__ ((persistent)) task_struct_task_1 = {.e_wc = 150.0, .in_set = {&task_struct_task_a}, .in_set_count = 1, .function_pointer = &task_1};
 #define TASK_ARRAY task_struct_t* __attribute__ ((persistent)) task_array[2] = {&task_struct_task_a, &task_struct_task_1};	\
-	app_struct_t* __attribute__ ((persistent)) active_task_array[2];	\
+	task_struct_t* __attribute__ ((persistent)) active_task_array[2] = {};	\
 	int __attribute__ ((persistent)) active_task_count = 0;	\
-	app_struct_t* __attribute__ ((persistent)) enabled_task_array[2];	\
+	task_struct_t* __attribute__ ((persistent)) enabled_task_array[2] = {};	\
 	int __attribute__ ((persistent)) enabled_task_count = 0;	\
 	
 #define TASK_COUNT 2
 #define APPS_COUNT 1
 #define APP_STRUCTS app_struct_t __attribute__ ((persistent)) app_struct_app_1 = {.x_min = 1, .tasks_count = 2, .app_tasks = {&task_struct_task_a, &task_struct_task_1}, .initial_task = &task_struct_task_a};
 #define APP_ARRAY app_struct_t* __attribute__ ((persistent)) app_array[1] = {&app_struct_app_1};	\
-	app_struct_t* __attribute__ ((persistent)) active_app_array[1];	\
+	app_struct_t* __attribute__ ((persistent)) active_app_array[1] = {};	\
 	int __attribute__ ((persistent)) active_app_count = 0;	\
 	
+#define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
+#define AVG_OVERHEAD 0.0
+#define RESTORE_OVERHEAD 1.0
 #define RESTORE(global_var, struct_address, version) global_var = struct_address.version_array[(struct_address.window_begin_index + version) % (struct_address.versions_count + 1)]
 
