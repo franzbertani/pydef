@@ -1,5 +1,5 @@
 typedef struct task_struct {
-    float e_wc;
+    int e_wc;
     struct task_struct* in_set[3];
     int in_set_count;
     void (*function_pointer)();
@@ -73,8 +73,8 @@ typedef struct app_struct {
 	
 #define END_TASK }
 
-#define TASKS_STRUCTS task_struct_t __attribute__ ((persistent)) task_struct_task_a = {.e_wc = 450.0, .in_set = {}, .in_set_count = 0, .function_pointer = &task_a};	\
-	task_struct_t __attribute__ ((persistent)) task_struct_task_1 = {.e_wc = 150.0, .in_set = {&task_struct_task_a}, .in_set_count = 1, .function_pointer = &task_1};
+#define TASKS_STRUCTS task_struct_t __attribute__ ((persistent)) task_struct_task_a = {.e_wc = 450, .in_set = {}, .in_set_count = 0, .function_pointer = &task_a};	\
+	task_struct_t __attribute__ ((persistent)) task_struct_task_1 = {.e_wc = 150, .in_set = {&task_struct_task_a}, .in_set_count = 1, .function_pointer = &task_1};
 #define TASK_ARRAY task_struct_t* __attribute__ ((persistent)) task_array[2] = {&task_struct_task_a, &task_struct_task_1};	\
 	task_struct_t* __attribute__ ((persistent)) active_task_array[2] = {};	\
 	int __attribute__ ((persistent)) active_task_count = 0;	\
