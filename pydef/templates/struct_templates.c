@@ -1,5 +1,5 @@
 typedef struct task_struct {
-    float e_wc;
+    int e_wc;
     struct task_struct* in_set[3];
     int in_set_count;
     void (*function_pointer)();

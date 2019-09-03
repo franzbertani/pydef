@@ -43,7 +43,7 @@ int check_if_new(task_struct_t *task){
     return 1;
 }
 
-void set_threshold(float threshold){
+void set_threshold(int threshold){
     return;
 }
 
@@ -82,8 +82,8 @@ void initialize(){
     } while(new_task_counter != 0);
 
     /* computing the wakeup threshold */
-    float energy_prediction[TASK_COUNT];
-    float max_energy_prediction = -10;
+    int energy_prediction[TASK_COUNT];
+    int max_energy_prediction = -10;
     for(int i=0; i<active_task_count; i++){
         energy_prediction[i] = active_task_array[i]->e_wc + RESTORE_OVERHEAD*active_task_array[i]->in_set_count;
         max_energy_prediction = MAX(max_energy_prediction, energy_prediction[i]);
@@ -92,7 +92,7 @@ void initialize(){
     /* set the deadlines */
     //TODO
 
-    siren_command("PRINTF: active task count %u\n", max_energy_prediction);
+    siren_command("PRINTF: max energy prediction %u\n", max_energy_prediction);
     set_threshold(max_energy_prediction + AVG_OVERHEAD);
     return;
 }
@@ -114,8 +114,73 @@ void scheduler(){
     }
 }
 
+
+
+
+
+
+
+
+#define DATA_POINTS_N 65
+#define MILLI_INTERVAL 123
+#define SHIFT_BITS 6
+/* This is an array of times (in milliseconds) mapped to a 12-bit ADC */
+const uint16_t _current_curve[DATA_POINTS_N] ={65535,6666,5551,4900,4438,4081,3789,3542,3328,3139,2970,2818,2679,2550,2432,2321,2218,2121,2029,1943,1861,1783,1708,1637,1569,1504,1441,1380,1322,1266,1212,1159,1109,1059,1012,965,920,876,834,792,751,712,673,636,599,563,528,493,460,427,394,363,332,301,271,242,213,185,157,129,103,76,50,25,0};
+
+/**
+ * Call this to get the time elapsed (ms) for a 0.1uF CusTARD capacitor (20MΩ discharge) on a 1.8V VCC
+ * @param  _adc_14_value [description]
+ * @return               [description]
+ */
+uint16_t fast_tardis(uint16_t _adc_14_value)
+{
+    int16_t left = _adc_14_value >> SHIFT_BITS;
+    return  _current_curve[left] -
+                ((
+                    (uint32_t)(_current_curve[left] - _current_curve[left+1]) *
+                    (uint32_t)(_adc_14_value - (left << SHIFT_BITS))
+                ) >> SHIFT_BITS);
+}
+
+
+uint16_t read_voltage_adc()
+{
+
+  ADC12CTL0 &= ~ADC12ENC;                    // Disable conversions to change input
+  ADC12MCTL0 |= BIT2;                       // Input 4
+  ADC12CTL0 |= ADC12ENC;                   // Re-enable conversions
+  ADC12CTL0 |= ADC12SC;                   // Start conversion-software trigger
+  while (!(ADC12IFGR0 & BIT0));
+  // Voltage = 4 + ((double) ADC12MEM0 / 32)
+  return ADC12MEM0;                     // Read conversion result
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 int main(){
+    WDTCTL = WDTPW | WDTHOLD;
+    ADC12CTL0 = ADC12ON | ADC12SHT0_2;        // Turn on ADC12, set sampling time
+    ADC12CTL1 = ADC12SHP;                     // Use sampling timer
+    ADC12CTL0 |= ADC12ENC;                    // Enable conversions
+    P1DIR |= BIT0;
+    P1OUT |= BIT0;
+
+    // Disable the GPIO power-on default high-impedance mode to activate
+    // previously frctlpwconfigured port settings
+    PM5CTL0 &= ~LOCKLPM5;
+
     resets++;
+    siren_command("PRINTF: voltage %u\n", fast_tardis(read_voltage_adc()));
     if(resets==0){
         initialize();
     }

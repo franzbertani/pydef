@@ -84,8 +84,8 @@ class Tasks:
                 id=task["id"],
                 in_set=[Dependency(**dep) for dep in task["in_set"]],
                 output=Variable(**task["output"]),
-                e_bc=float(task["e_bc"]),
-                e_wc=float(task["e_wc"]))
+                e_bc=int(task["e_bc"]),
+                e_wc=int(task["e_wc"]))
             if(self.check_task_consistency(new_task)):
                 self.tasks_dict[new_task.id] = new_task
             else:
