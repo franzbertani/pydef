@@ -1,9 +1,9 @@
 #SOURCES 	=  main.c $(SIREN_LIB)/printf.c
 #OBJECTS 	=  main.o $(SIREN_LIB)/printf.o
-SOURCES 	=  test2simple.c $(SIREN_LIB)/printf.c
-OBJECTS 	=  test2simple.o $(SIREN_LIB)/printf.o
-# SOURCES 	=  test2.c $(SIREN_LIB)/printf.c
-# OBJECTS 	=  test2.o $(SIREN_LIB)/printf.o
+# SOURCES 	=  test2simple.c $(SIREN_LIB)/printf.c
+# OBJECTS 	=  test2simple.o $(SIREN_LIB)/printf.o
+SOURCES 	=  test2.c $(SIREN_LIB)/printf.c
+OBJECTS 	=  test2.o $(SIREN_LIB)/printf.o
 # SOURCES 	=  ~/git/BatterylessSim/firmware/moo/main.c $(SIREN_LIB)/printf.c
 # OBJECTS 	=  ~/git/BatterylessSim/firmware/moo/main.c $(SIREN_LIB)/printf.o
 #SOURCES 	=  hardware_tests/msp430fr69xx_cs_01.c $(SIREN_LIB)/printf.c

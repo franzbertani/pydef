@@ -2,6 +2,7 @@ typedef struct task_struct {
     int e_wc;
     struct task_struct* in_set[3];
     int in_set_count;
+    float deadline;
     void (*function_pointer)();
 } task_struct_t;
 

@@ -19,15 +19,18 @@ int __attribute__ ((persistent)) tardis_time = 0;
 
 BEGIN_TASK_task_1
     int t1_out;
-    siren_command("PRINTF: running task 1\n");
+    siren_command("TEST_RESET: %u\n", &tardis_time);
+    /* siren_command("PRINTF: running task 1\n"); */
     t1_out = get_sample();
     RETURN_task_1
 END_TASK
 
 BEGIN_TASK_task_2
+    siren_command("TEST_RESET: %u\n", &tardis_time);
+    siren_command("PRINTF: off for %u millisecond\n", tardis_time);
     int t2_output;
     t2_output = task_1 + 10;
-    siren_command("PRINTF: running task 2\n");
+    /* siren_command("PRINTF: running task 2\n"); */
     RETURN_task_2
 END_TASK
 
@@ -50,17 +53,17 @@ void set_threshold(int threshold){
 
 void initialize(){
     siren_command("PRINTF: initialize after first boot\n");
-    /* activate first app */
+
+    /* activate first app and its tasks L:4-5 */
     app_struct_t *app = app_array[active_app_count];
     active_app_array[active_app_count] = app;
 
-    /* adding app tasks to active_tasks_array*/
     for(int i=0; i<app->tasks_count; i++){
         active_task_array[active_task_count] = (app->app_tasks)[i];
         active_task_count++;
     }
 
-    /* completing tasks set with extra app dependencies */
+    /* completing tasks set with extra app dependencies L:6-12 */
     task_struct_t* new_tasks[TASK_COUNT];
     int new_task_counter;
     do {
@@ -75,14 +78,13 @@ void initialize(){
                 }
             }
         }
-        /* pouring new tasks into active task */
-        for(int i=0; i<new_task_counter; i++){
+        for(int i=0; i<new_task_counter; i++){ // pouring new tasks into active task
             active_task_array[active_task_count] = new_tasks[i];
             active_task_count++;
         }
     } while(new_task_counter != 0);
 
-    /* computing the wakeup threshold */
+    /* computing the wakeup threshold L:13-14*/
     int energy_prediction[TASK_COUNT];
     int max_energy_prediction = -10;
     for(int i=0; i<active_task_count; i++){
@@ -90,17 +92,27 @@ void initialize(){
         max_energy_prediction = MAX(max_energy_prediction, energy_prediction[i]);
     }
 
-    /* set the deadlines */
-    //TODO
+    /* set the deadlines L:17-22 */
+    for(int i=0; i<active_task_count; i++){
+        if(active_task_array[i]->in_set_count == 0){
+            active_task_array[i]->deadline = 1/app->x_min;
+            enabled_task_array[enabled_task_count] = active_task_array[i];
+            enabled_task_count++;
+        }
+    }
 
     siren_command("PRINTF: max energy prediction %u\n", max_energy_prediction);
+
+    /* currently just a stub L:23*/
     set_threshold(max_energy_prediction + AVG_OVERHEAD);
     return;
 }
 
+//TODO
+//currently static to test restore
 void scheduler(){
     task_struct_t next_task_struct;
-    if(seen_resets != resets){
+    if(seen_resets != resets){ // a reset occurred
         seen_resets = resets;
         if(next_task == 1){
             siren_command("PRINTF: restore\n");
@@ -111,8 +123,6 @@ void scheduler(){
         next_task_struct = *(task_array[next_task]);
         (next_task_struct.function_pointer)();
         next_task = (next_task+1) % 2;
-        siren_command("CHVAR:%u\n", &tardis_time);
-        siren_command("PRINTF: nuovo valore%u\n", tardis_time);
     }
 }
 
