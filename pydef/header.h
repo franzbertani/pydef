@@ -37,9 +37,11 @@ typedef struct app_struct {
 	
 #define DECLARE_OUTPUT_VARIABLES task_1_output_var	\
 	task_2_output_var
-#define BEGIN_TASK_task_1 void task_1(){
+#define BEGIN_TASK_task_1 void task_1(){	\
+	siren_command("TEST_RESET: %u\n", &tardis_time);
 #define BEGIN_TASK_task_2 void task_2(){	\
-	int task_1 = g_task_1;
+	int task_1 = g_task_1;	\
+	siren_command("TEST_RESET: %u\n", &tardis_time);
 #define RETURN_task_1 g_task_1 = t1_out;	\
 	var_struct_task_1.version_array[var_struct_task_1.write_index] = g_task_1;	\
 		\

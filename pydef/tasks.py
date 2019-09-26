@@ -145,6 +145,7 @@ class Tasks:
                         self.tasks_dict[dep.task_id].output.type,
                         dep.task_id,
                         "g_%s" % (dep.task_id)))
+            define_value.append('siren_command("TEST_RESET: %u\\n", &tardis_time);')
             header.add_define((define_key, "\t\\\n\t".join(define_value)))
 
     def add_tasks_end(self, header):

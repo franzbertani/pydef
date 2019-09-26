@@ -18,19 +18,16 @@ int __attribute__ ((persistent)) next_task = 0;
 int __attribute__ ((persistent)) tardis_time = 0;
 
 BEGIN_TASK_task_1
+    siren_command("PRINTF: running task 1\n");
     int t1_out;
-    siren_command("TEST_RESET: %u\n", &tardis_time);
-    /* siren_command("PRINTF: running task 1\n"); */
     t1_out = get_sample();
     RETURN_task_1
 END_TASK
 
 BEGIN_TASK_task_2
-    siren_command("TEST_RESET: %u\n", &tardis_time);
-    siren_command("PRINTF: off for %u millisecond\n", tardis_time);
+    siren_command("PRINTF: running task 2\n");
     int t2_output;
     t2_output = task_1 + 10;
-    /* siren_command("PRINTF: running task 2\n"); */
     RETURN_task_2
 END_TASK
 
@@ -133,12 +130,13 @@ int main(){
     resets++;
     if(resets==0){
         initialize();
+    } else {
+        siren_command("PRINTF: restarted after %u milliseconds\n", tardis_time);
     }
     if(resets==10){
         siren_command("PRINTF: done, restarted %u\r\n", resets);
         return 0;
     }
-    siren_command("PRINTF: restart\n");
     scheduler();
     return 0;
 }
