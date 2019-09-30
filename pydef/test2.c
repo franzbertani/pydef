@@ -11,6 +11,7 @@
 #include "fake_sensor.h"
 
 DECLARE_OUTPUT_VARIABLES
+EXTERN_VARS
 
 int __attribute__ ((persistent)) resets = -1;
 int __attribute__ ((persistent)) seen_resets = 0;
@@ -18,6 +19,7 @@ int __attribute__ ((persistent)) next_task = 0;
 int __attribute__ ((persistent)) tardis_time = 0;
 
 BEGIN_TASK_task_1
+    extern task_struct_t task_struct_task_2;
     siren_command("PRINTF: running task 1\n");
     int t1_out;
     t1_out = get_sample();
@@ -53,6 +55,7 @@ void initialize(){
 
     /* activate first app and its tasks L:4-5 */
     app_struct_t *app = app_array[active_app_count];
+    app->isActive |= 0x1;
     active_app_array[active_app_count] = app;
 
     for(int i=0; i<app->tasks_count; i++){
@@ -93,6 +96,7 @@ void initialize(){
     for(int i=0; i<active_task_count; i++){
         if(active_task_array[i]->in_set_count == 0){
             active_task_array[i]->deadline = 1/app->x_min;
+            active_task_array[i]->isEnabled |= 0x1;
             enabled_task_array[enabled_task_count] = active_task_array[i];
             enabled_task_count++;
         }
@@ -117,6 +121,9 @@ void scheduler(){
         }
     }
     while(1){
+        //enabled tasks array is updated on exit of father task
+        //update deadlines of enabled tasks L:2
+        //sort enabled tasks array
         next_task_struct = *(task_array[next_task]);
         (next_task_struct.function_pointer)();
         next_task = (next_task+1) % 2;

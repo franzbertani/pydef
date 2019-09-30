@@ -20,4 +20,8 @@ APPLICATIONS:
       tasks: [task_1, task_2]
       initial_task: task_1
       x_min: 1
+    - id: app_2
+      tasks: [task_2]
+      initial_task: task_2
+      x_min: 3
 

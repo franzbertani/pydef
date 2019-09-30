@@ -54,6 +54,7 @@ A = Applications()
 d = read_yaml_file("example.yaml")
 T.build_tasks_dict(d)
 A.build_apps_dict(d, T.get_tasks_dict())
+T.set_apps_dict(A.get_apps_dict())
 
 if not T.check_dependencies_consistency():
     print("ERROR: can not procede due to tasks inconsisntency")

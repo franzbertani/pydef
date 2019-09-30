@@ -80,6 +80,11 @@ class Applications:
             new_app.set_initial_task(app["initial_task"])
             self.apps_dict[app["id"]] = new_app
 
+    def get_apps_dict(self):
+        return self.apps_dict
+
+
+
     def add_apps_structs(self, header):
         """Generates the header defines to declare an app struct for each app
 
