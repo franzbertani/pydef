@@ -200,15 +200,18 @@ class Tasks:
                                self.tasks_dict[child_name].apps]
             task_enabler_string = task_enabler_string.replace(
                 "APP_CONDITION", " || ".join(app_struct_list))
-            app_list_iter = iter(self.tasks_dict[child_name].apps)
+            app_list_iter = iter(sorted(
+                self.tasks_dict[child_name].apps, key=lambda x: self.apps_dict[x].x_min, reverse=True))
             app_id = next(app_list_iter)
             deadline_string = "if(%s && app_struct_%s.isActive) task_struct_%s.deadline = 1/%s;" % (
                 self.apps_dict[app_id].x_min, app_id, child_name, self.apps_dict[app_id].x_min)
             for app_id in app_list_iter:
                 deadline_string += "else if(%s && app_struct_%s.isActive) task_struct_%s.deadline = 1/%s;" % (
-                self.apps_dict[app_id].x_min, app_id, child_name, self.apps_dict[app_id].x_min)
-            task_enabler_string = task_enabler_string.replace("DEADLINES_UPDATE", deadline_string)
+                    self.apps_dict[app_id].x_min, app_id, child_name, self.apps_dict[app_id].x_min)
+            task_enabler_string = task_enabler_string.replace(
+                "DEADLINES_UPDATE", deadline_string)
             function_string += task_enabler_string
+        #must update the deadline for the current task, setting it to twice the original value
         return function_string
 
     def add_tasks_returns(self, header):

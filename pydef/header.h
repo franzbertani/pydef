@@ -69,7 +69,7 @@ typedef struct app_struct {
 	    task_struct_task_2.isEnabled |= 0x1;	\
 	    enabled_task_array[enabled_task_count] = &task_struct_task_2;	\
 	    enabled_task_count++;	\
-	    if(1 && app_struct_app_1.isActive) task_struct_task_2.deadline = 1/1;else if(3 && app_struct_app_2.isActive) task_struct_task_2.deadline = 1/3;	\
+	    if(3 && app_struct_app_2.isActive) task_struct_task_2.deadline = 1/3;else if(1 && app_struct_app_1.isActive) task_struct_task_2.deadline = 1/1;	\
 	}	\
 	
 #define RETURN_task_2 g_task_2 = t2_output;	\

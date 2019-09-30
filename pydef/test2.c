@@ -122,8 +122,12 @@ void scheduler(){
     }
     while(1){
         //enabled tasks array is updated on exit of father task
-        //update deadlines of enabled tasks L:2
-        //sort enabled tasks array
+        //deadlines of added tasks are set on exit of father
+        //TODO
+        //halve deadlines
+        //restore deadlines not to be halved
+        //sort array of enabled tasks
+        //select task
         next_task_struct = *(task_array[next_task]);
         (next_task_struct.function_pointer)();
         next_task = (next_task+1) % 2;
