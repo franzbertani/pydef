@@ -17,13 +17,14 @@ int __attribute__ ((persistent)) resets = -1;
 int __attribute__ ((persistent)) seen_resets = 0;
 int __attribute__ ((persistent)) next_task = 0;
 int __attribute__ ((persistent)) tardis_time = 0;
+int delta_time = 0;
 
 BEGIN_TASK_task_1
-    extern task_struct_t task_struct_task_2;
     siren_command("PRINTF: running task 1\n");
     int t1_out;
     t1_out = get_sample();
     RETURN_task_1
+    siren_command("PRINTF: elapsed time %u\n", delta_time);
 END_TASK
 
 BEGIN_TASK_task_2
@@ -31,6 +32,7 @@ BEGIN_TASK_task_2
     int t2_output;
     t2_output = task_1 + 10;
     RETURN_task_2
+    siren_command("PRINTF: elapsed time %u\n", delta_time);
 END_TASK
 
 TASKS_STRUCTS

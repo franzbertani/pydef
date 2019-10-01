@@ -160,6 +160,8 @@ class Tasks:
                         "g_%s" % (dep.task_id)))
             define_value.append(
                 'siren_command("TEST_RESET: %u\\n", &tardis_time);')
+            define_value.append(
+                'siren_command("START_TIME: \\n");')
             header.add_define((define_key, "\t\\\n\t".join(define_value)))
 
     def add_tasks_end(self, header):
@@ -172,6 +174,30 @@ class Tasks:
             an Header object
         """
         header.add_define(("END_TASK", "}\n"))
+
+    def add_deadline_restore(self, task_id, subtract_exec_time=True, exec_time_var_name="delta_time"):
+
+        app_list_iter = iter(sorted(
+            self.tasks_dict[task_id].apps, key=lambda x: self.apps_dict[x].x_min, reverse=True))
+        app_id = next(app_list_iter)
+
+        if subtract_exec_time:
+            deadline_string = "if(app_struct_%s.isActive) task_struct_%s.deadline = (1/%s) - %s;" % (
+            app_id, task_id, self.apps_dict[app_id].x_min, exec_time_var_name)
+        else: deadline_string = "if(app_struct_%s.isActive) task_struct_%s.deadline = (1/%s);" % (
+            app_id, task_id, self.apps_dict[app_id].x_min)
+
+        for app_id in app_list_iter:
+            if subtract_exec_time:
+                deadline_string += "else if(app_struct_%s.isActive) task_struct_%s.deadline = (1/%s) - %s;" % (
+                app_id, task_id, self.apps_dict[app_id].x_min, exec_time_var_name)
+            else:
+                deadline_string += "else if(app_struct_%s.isActive) task_struct_%s.deadline = (1/%s);" % (
+                app_id, task_id, self.apps_dict[app_id].x_min)
+
+        return deadline_string
+
+
 
     def add_tasks_enabler_function(self, father_task_id):
         """Returns the string that enable all child tasks
@@ -193,25 +219,25 @@ class Tasks:
         with open(task_enabler_template, "r") as template_file:
             template = template_file.read().replace("\n", "\t\\\n\t")
         successors = self.tasks_graph.successors(father_task_id)
+
+        task_enabler_string = ""
+
         for child_name in successors:
+            #enable tasks
             task_enabler_string = template.replace(
                 "TASK_NAME", "task_struct_%s" % (child_name))
-            app_struct_list = ["app_struct_%s.isActive" % (app_name) for app_name in
-                               self.tasks_dict[child_name].apps]
+            app_struct_list = ["app_struct_%s.isActive" % (app_name)
+                               for app_name in self.tasks_dict[child_name].apps]
             task_enabler_string = task_enabler_string.replace(
                 "APP_CONDITION", " || ".join(app_struct_list))
-            app_list_iter = iter(sorted(
-                self.tasks_dict[child_name].apps, key=lambda x: self.apps_dict[x].x_min, reverse=True))
-            app_id = next(app_list_iter)
-            deadline_string = "if(%s && app_struct_%s.isActive) task_struct_%s.deadline = 1/%s;" % (
-                self.apps_dict[app_id].x_min, app_id, child_name, self.apps_dict[app_id].x_min)
-            for app_id in app_list_iter:
-                deadline_string += "else if(%s && app_struct_%s.isActive) task_struct_%s.deadline = 1/%s;" % (
-                    self.apps_dict[app_id].x_min, app_id, child_name, self.apps_dict[app_id].x_min)
+
+            #set deadlines for newly enabled tasks
             task_enabler_string = task_enabler_string.replace(
-                "DEADLINES_UPDATE", deadline_string)
-            function_string += task_enabler_string
-        #must update the deadline for the current task, setting it to twice the original value
+                "DEADLINES_UPDATE", self.add_deadline_restore(child_name))
+
+
+        function_string += task_enabler_string
+
         return function_string
 
     def add_tasks_returns(self, header):
@@ -231,8 +257,7 @@ class Tasks:
             define_value = template.replace("TASK", task_id).replace(
                 "LOCAL_VAR", task_props.output.name)
             define_value += self.add_tasks_enabler_function(task_id)
-            # define_value = "g_%s = %s;\t\\\n\treturn;" % (
-            #     task, self.tasks_dict[task].output.name)
+            define_value += self.add_deadline_restore(task_id, subtract_exec_time=False)
             header.add_define((define_key, define_value))
 
     def add_tasks_structs(self, header):

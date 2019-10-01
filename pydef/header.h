@@ -45,10 +45,12 @@ typedef struct app_struct {
 	extern int enabled_task_count;	\
 	extern task_struct_t task_struct_task_1;extern task_struct_t task_struct_task_2;extern app_struct_t app_struct_app_1;extern app_struct_t app_struct_app_2;
 #define BEGIN_TASK_task_1 void task_1(){	\
-	siren_command("TEST_RESET: %u\n", &tardis_time);
+	siren_command("TEST_RESET: %u\n", &tardis_time);	\
+	siren_command("START_TIME: \n");
 #define BEGIN_TASK_task_2 void task_2(){	\
 	int task_1 = g_task_1;	\
-	siren_command("TEST_RESET: %u\n", &tardis_time);
+	siren_command("TEST_RESET: %u\n", &tardis_time);	\
+	siren_command("START_TIME: \n");
 #define RETURN_task_1 g_task_1 = t1_out;	\
 	var_struct_task_1.version_array[var_struct_task_1.write_index] = g_task_1;	\
 		\
@@ -61,6 +63,8 @@ typedef struct app_struct {
 	    var_struct_task_1.window_begin_index = (var_struct_task_1.window_begin_index + 1) % (var_struct_task_1.versions_count + 1);	\
 	}	\
 		\
+	siren_command("GET_TIME: %u\n", &delta_time);	\
+		\
 	/* siren_command("PRINTF: var_struct_task_1 :\r\n"); */	\
 	/* for(int i=0; i<var_struct_task_1.versions_count; i++) */	\
 	/*     siren_command("PRINTF: %u\r\n", var_struct_task_1.version_array[(var_struct_task_1.window_begin_index + i) % (var_struct_task_1.versions_count + 1)]); */	\
@@ -69,9 +73,9 @@ typedef struct app_struct {
 	    task_struct_task_2.isEnabled |= 0x1;	\
 	    enabled_task_array[enabled_task_count] = &task_struct_task_2;	\
 	    enabled_task_count++;	\
-	    if(3 && app_struct_app_2.isActive) task_struct_task_2.deadline = 1/3;else if(1 && app_struct_app_1.isActive) task_struct_task_2.deadline = 1/1;	\
+	    if(app_struct_app_2.isActive) task_struct_task_2.deadline = (1/3) - delta_time;else if(app_struct_app_1.isActive) task_struct_task_2.deadline = (1/1) - delta_time;	\
 	}	\
-	
+	if(app_struct_app_1.isActive) task_struct_task_1.deadline = (1/1);
 #define RETURN_task_2 g_task_2 = t2_output;	\
 	var_struct_task_2.version_array[var_struct_task_2.write_index] = g_task_2;	\
 		\
@@ -84,10 +88,12 @@ typedef struct app_struct {
 	    var_struct_task_2.window_begin_index = (var_struct_task_2.window_begin_index + 1) % (var_struct_task_2.versions_count + 1);	\
 	}	\
 		\
+	siren_command("GET_TIME: %u\n", &delta_time);	\
+		\
 	/* siren_command("PRINTF: var_struct_task_2 :\r\n"); */	\
 	/* for(int i=0; i<var_struct_task_2.versions_count; i++) */	\
 	/*     siren_command("PRINTF: %u\r\n", var_struct_task_2.version_array[(var_struct_task_2.window_begin_index + i) % (var_struct_task_2.versions_count + 1)]); */	\
-	
+	if(app_struct_app_2.isActive) task_struct_task_2.deadline = (1/3);else if(app_struct_app_1.isActive) task_struct_task_2.deadline = (1/1);
 #define END_TASK }
 
 #define TASKS_STRUCTS task_struct_t __attribute__ ((persistent)) task_struct_task_1 = {.e_wc = 450, .in_set = {}, .in_set_count = 0, .function_pointer = &task_1, .isEnabled = 0x0};	\
