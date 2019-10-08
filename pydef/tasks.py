@@ -159,8 +159,6 @@ class Tasks:
                         dep.task_id,
                         "g_%s" % (dep.task_id)))
             define_value.append(
-                'siren_command("TEST_RESET: %u\\n", &tardis_time);')
-            define_value.append(
                 'siren_command("START_TIME: \\n");')
             header.add_define((define_key, "\t\\\n\t".join(define_value)))
 
@@ -178,21 +176,30 @@ class Tasks:
     def add_deadline_restore(self, task_id, subtract_exec_time=True, exec_time_var_name="delta_time"):
 
         app_list_iter = iter(sorted(
-            self.tasks_dict[task_id].apps, key=lambda x: self.apps_dict[x].x_min, reverse=True))
+            self.tasks_dict[task_id].apps, key=lambda x: self.apps_dict[x].x_min, reverse=False))
         app_id = next(app_list_iter)
 
+        """ DELTA TIME SUBTRATION DONE BY THE SCHEDULER
         if subtract_exec_time:
-            deadline_string = "if(app_struct_%s.isActive) task_struct_%s.deadline = (1/%s) - %s;" % (
+            deadline_string = "if(app_struct_%s.isActive) task_struct_%s.deadline = (%s - %s);" % (
             app_id, task_id, self.apps_dict[app_id].x_min, exec_time_var_name)
-        else: deadline_string = "if(app_struct_%s.isActive) task_struct_%s.deadline = (1/%s);" % (
+        else: deadline_string = "if(app_struct_%s.isActive) task_struct_%s.deadline = %s;" % (
+            app_id, task_id, self.apps_dict[app_id].x_min)
+        """
+
+        deadline_string = "if(app_struct_%s.isActive) task_struct_%s.deadline = %s;" % (
             app_id, task_id, self.apps_dict[app_id].x_min)
 
         for app_id in app_list_iter:
+            """ SAME AS BEFORE
             if subtract_exec_time:
-                deadline_string += "else if(app_struct_%s.isActive) task_struct_%s.deadline = (1/%s) - %s;" % (
+                deadline_string += "else if(app_struct_%s.isActive) task_struct_%s.deadline = %s - %s;" % (
                 app_id, task_id, self.apps_dict[app_id].x_min, exec_time_var_name)
             else:
-                deadline_string += "else if(app_struct_%s.isActive) task_struct_%s.deadline = (1/%s);" % (
+                deadline_string += "else if(app_struct_%s.isActive) task_struct_%s.deadline = %s;" % (
+                app_id, task_id, self.apps_dict[app_id].x_min)
+            """
+            deadline_string += "else if(app_struct_%s.isActive) task_struct_%s.deadline = %s;" % (
                 app_id, task_id, self.apps_dict[app_id].x_min)
 
         return deadline_string

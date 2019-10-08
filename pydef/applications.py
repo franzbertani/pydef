@@ -75,7 +75,10 @@ class Applications:
                       (app["id"],))
                 continue
             new_app = Application(app["id"])
-            new_app.x_min = app.get("x_min", 0)
+            x_min = app.get("x_min", 0)
+            if x_min > 0:
+                x_min = int((1/x_min) * 1000000) #deadline for tasks in micro seconds
+            new_app.x_min = x_min
             new_app.build_tasks_dict(app.get("tasks", []), tasks_dict)
             new_app.set_initial_task(app["initial_task"])
             self.apps_dict[app["id"]] = new_app
@@ -99,6 +102,7 @@ class Applications:
         structs = []
         for k, v in self.apps_dict.items():
             app_define = template.replace("APP", k)
+            print(v.x_min)
             app_define = app_define.replace("TP", str(v.x_min))
             app_define = app_define.replace(
                 "TASKS_COUNT", str(len(v.tasks_dict)))

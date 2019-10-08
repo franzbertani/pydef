@@ -11,6 +11,7 @@ if(var_struct_TASK.is_full){
 }
 
 siren_command("GET_TIME: %u\n", &delta_time);
+siren_command("TEST_EXECUTION: %u\n", delta_time);
 
 /* siren_command("PRINTF: var_struct_TASK :\r\n"); */
 /* for(int i=0; i<var_struct_TASK.versions_count; i++) */

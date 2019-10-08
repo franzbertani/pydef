@@ -2,7 +2,7 @@ typedef struct task_struct {
     int e_wc;
     struct task_struct* in_set[3];
     int in_set_count;
-    float deadline;
+    unsigned long int deadline;
     void (*function_pointer)();
     char isEnabled;
 } task_struct_t;
@@ -11,7 +11,7 @@ typedef struct app_struct {
     task_struct_t* app_tasks[5];
     task_struct_t* initial_task;
     int tasks_count;
-    float x_min;
+    unsigned long int x_min;
     char isActive;
 } app_struct_t;
 
@@ -45,11 +45,9 @@ typedef struct app_struct {
 	extern int enabled_task_count;	\
 	extern task_struct_t task_struct_task_1;extern task_struct_t task_struct_task_2;extern app_struct_t app_struct_app_1;extern app_struct_t app_struct_app_2;
 #define BEGIN_TASK_task_1 void task_1(){	\
-	siren_command("TEST_RESET: %u\n", &tardis_time);	\
 	siren_command("START_TIME: \n");
 #define BEGIN_TASK_task_2 void task_2(){	\
 	int task_1 = g_task_1;	\
-	siren_command("TEST_RESET: %u\n", &tardis_time);	\
 	siren_command("START_TIME: \n");
 #define RETURN_task_1 g_task_1 = t1_out;	\
 	var_struct_task_1.version_array[var_struct_task_1.write_index] = g_task_1;	\
@@ -64,6 +62,7 @@ typedef struct app_struct {
 	}	\
 		\
 	siren_command("GET_TIME: %u\n", &delta_time);	\
+	siren_command("TEST_EXECUTION: %u\n", delta_time);	\
 		\
 	/* siren_command("PRINTF: var_struct_task_1 :\r\n"); */	\
 	/* for(int i=0; i<var_struct_task_1.versions_count; i++) */	\
@@ -73,9 +72,9 @@ typedef struct app_struct {
 	    task_struct_task_2.isEnabled |= 0x1;	\
 	    enabled_task_array[enabled_task_count] = &task_struct_task_2;	\
 	    enabled_task_count++;	\
-	    if(app_struct_app_2.isActive) task_struct_task_2.deadline = (1/3) - delta_time;else if(app_struct_app_1.isActive) task_struct_task_2.deadline = (1/1) - delta_time;	\
+	    if(app_struct_app_2.isActive) task_struct_task_2.deadline = 333333;else if(app_struct_app_1.isActive) task_struct_task_2.deadline = 1000000;	\
 	}	\
-	if(app_struct_app_1.isActive) task_struct_task_1.deadline = (1/1);
+	if(app_struct_app_1.isActive) task_struct_task_1.deadline = 1000000;
 #define RETURN_task_2 g_task_2 = t2_output;	\
 	var_struct_task_2.version_array[var_struct_task_2.write_index] = g_task_2;	\
 		\
@@ -89,11 +88,12 @@ typedef struct app_struct {
 	}	\
 		\
 	siren_command("GET_TIME: %u\n", &delta_time);	\
+	siren_command("TEST_EXECUTION: %u\n", delta_time);	\
 		\
 	/* siren_command("PRINTF: var_struct_task_2 :\r\n"); */	\
 	/* for(int i=0; i<var_struct_task_2.versions_count; i++) */	\
 	/*     siren_command("PRINTF: %u\r\n", var_struct_task_2.version_array[(var_struct_task_2.window_begin_index + i) % (var_struct_task_2.versions_count + 1)]); */	\
-	if(app_struct_app_2.isActive) task_struct_task_2.deadline = (1/3);else if(app_struct_app_1.isActive) task_struct_task_2.deadline = (1/1);
+	if(app_struct_app_2.isActive) task_struct_task_2.deadline = 333333;else if(app_struct_app_1.isActive) task_struct_task_2.deadline = 1000000;
 #define END_TASK }
 
 #define TASKS_STRUCTS task_struct_t __attribute__ ((persistent)) task_struct_task_1 = {.e_wc = 450, .in_set = {}, .in_set_count = 0, .function_pointer = &task_1, .isEnabled = 0x0};	\
@@ -106,9 +106,9 @@ typedef struct app_struct {
 	
 #define TASK_COUNT 2
 #define APPS_COUNT 2
-#define APP_STRUCTS app_struct_t __attribute__ ((persistent)) app_struct_app_1 = {.x_min = 1, .tasks_count = 2, .app_tasks = {&task_struct_task_1, &task_struct_task_2}, .initial_task = &task_struct_task_1, .isActive = 0x0};	\
-	app_struct_t __attribute__ ((persistent)) app_struct_app_2 = {.x_min = 3, .tasks_count = 1, .app_tasks = {&task_struct_task_2}, .initial_task = &task_struct_task_2, .isActive = 0x0};
-#define APP_ARRAY app_struct_t* __attribute__ ((persistent)) app_array[2] = {&app_struct_app_2, &app_struct_app_1};	\
+#define APP_STRUCTS app_struct_t __attribute__ ((persistent)) app_struct_app_1 = {.x_min = 1000000, .tasks_count = 2, .app_tasks = {&task_struct_task_1, &task_struct_task_2}, .initial_task = &task_struct_task_1, .isActive = 0x0};	\
+	app_struct_t __attribute__ ((persistent)) app_struct_app_2 = {.x_min = 333333, .tasks_count = 1, .app_tasks = {&task_struct_task_2}, .initial_task = &task_struct_task_2, .isActive = 0x0};
+#define APP_ARRAY app_struct_t* __attribute__ ((persistent)) app_array[2] = {&app_struct_app_1, &app_struct_app_2};	\
 	app_struct_t* __attribute__ ((persistent)) active_app_array[2] = {};	\
 	int __attribute__ ((persistent)) active_app_count = 0;	\
 	
