@@ -1,0 +1,283 @@
+struct task_1_var_struct { int version_array[1 + 1];
+                           short int versions_count;
+                           short int window_begin_index;
+                           short int write_index;
+                           char is_full;
+};
+struct task_1_var_struct __attribute__ ((persistent)) var_struct_task_1 = { .versions_count = 1, .window_begin_index = 0, .write_index = 0, .is_full = 0 };
+int g_task_1;
+struct task_2_var_struct { int version_array[1 + 1];
+                           short int versions_count;
+                           short int window_begin_index;
+                           short int write_index;
+                           char is_full;
+};
+struct task_2_var_struct __attribute__ ((persistent)) var_struct_task_2 = { .versions_count = 1, .window_begin_index = 0, .write_index = 0, .is_full = 0 };
+int g_task_2;
+extern app_struct_t *active_app_array[2];
+extern int active_app_count;
+extern task_struct_t *enabled_task_array[2];
+extern int enabled_task_count;
+extern task_struct_t task_struct_task_1;
+extern task_struct_t task_struct_task_2;
+extern app_struct_t app_struct_app_1;
+extern app_struct_t app_struct_app_2;
+
+int __attribute__ ((persistent)) resets = -1;
+int __attribute__ ((persistent)) seen_resets = 0;
+int __attribute__ ((persistent)) next_task = 0;
+int __attribute__ ((persistent)) tardis_time = 0;
+int __attribute__ ((persistent)) delta_time = 0;
+
+void
+task_1()
+{
+  siren_command("START_TIME: \n");
+  siren_command("PRINTF: running task 1\n");
+  int t1_out;
+  t1_out = get_sample();
+  g_task_1 = t1_out;
+  var_struct_task_1.version_array[var_struct_task_1.write_index] = g_task_1;
+  var_struct_task_1.write_index = (var_struct_task_1.write_index + 1) % (var_struct_task_1.versions_count + 1);
+  if(var_struct_task_1.is_full) {
+    var_struct_task_1.window_begin_index = (var_struct_task_1.window_begin_index + 1) % (var_struct_task_1.versions_count + 1);
+  } else if(var_struct_task_1.write_index == 0) {
+    var_struct_task_1.is_full = 1;
+    var_struct_task_1.window_begin_index = (var_struct_task_1.window_begin_index + 1) % (var_struct_task_1.versions_count + 1);
+  }
+  siren_command("GET_TIME: %u\n", &delta_time);
+  siren_command("TEST_EXECUTION: %u\n", delta_time);
+  extern task_struct_t task_struct_task_2;
+  if(!(task_struct_task_2.isEnabled) && (app_struct_app_1.isActive || app_struct_app_2.isActive)) {
+    task_struct_task_2.isEnabled |= 0x1;
+    enabled_task_array[enabled_task_count] = &task_struct_task_2;
+    enabled_task_count++;
+    if(app_struct_app_2.isActive) {
+      task_struct_task_2.deadline = 333333;
+    } else if(app_struct_app_1.isActive) {
+      task_struct_task_2.deadline = 1000000;
+    }
+  }
+  if(app_struct_app_1.isActive) {
+    task_struct_task_1.deadline = 1000000;
+  }
+}
+void
+task_2()
+{
+  int task_1 = g_task_1;
+  siren_command("START_TIME: \n");
+  siren_command("PRINTF: running task 2\n");
+  int t2_output;
+  t2_output = task_1 + 10;
+  g_task_2 = t2_output;
+  var_struct_task_2.version_array[var_struct_task_2.write_index] = g_task_2;
+  var_struct_task_2.write_index = (var_struct_task_2.write_index + 1) % (var_struct_task_2.versions_count + 1);
+  if(var_struct_task_2.is_full) {
+    var_struct_task_2.window_begin_index = (var_struct_task_2.window_begin_index + 1) % (var_struct_task_2.versions_count + 1);
+  } else if(var_struct_task_2.write_index == 0) {
+    var_struct_task_2.is_full = 1;
+    var_struct_task_2.window_begin_index = (var_struct_task_2.window_begin_index + 1) % (var_struct_task_2.versions_count + 1);
+  }
+  siren_command("GET_TIME: %u\n", &delta_time);
+  siren_command("TEST_EXECUTION: %u\n", delta_time);
+  if(app_struct_app_2.isActive) {
+    task_struct_task_2.deadline = 333333;
+  } else if(app_struct_app_1.isActive) {
+    task_struct_task_2.deadline = 1000000;
+  }
+}
+task_struct_t __attribute__ ((persistent)) task_struct_task_1 = { .e_wc = 450, .in_set = {}, .in_set_count = 0, .function_pointer = &task_1, .isEnabled = 0x0 };
+task_struct_t __attribute__ ((persistent)) task_struct_task_2 = { .e_wc = 150, .in_set = { &task_struct_task_1 }, .in_set_count = 1, .function_pointer = &task_2, .isEnabled = 0x0 };
+task_struct_t *__attribute__ ((persistent)) task_array[2] = { &task_struct_task_1, &task_struct_task_2 };
+task_struct_t *__attribute__ ((persistent)) active_task_array[2] = {};
+int __attribute__ ((persistent)) active_task_count = 0;
+task_struct_t *__attribute__ ((persistent)) enabled_task_array[2] = {};
+int __attribute__ ((persistent)) enabled_task_count = 0;
+app_struct_t __attribute__ ((persistent)) app_struct_app_1 = { .x_min = 1000000, .tasks_count = 2, .app_tasks = { &task_struct_task_1, &task_struct_task_2 }, .initial_task = &task_struct_task_1, .isActive = 0x0 };
+app_struct_t __attribute__ ((persistent)) app_struct_app_2 = { .x_min = 333333, .tasks_count = 1, .app_tasks = { &task_struct_task_2 }, .initial_task = &task_struct_task_2, .isActive = 0x0 };
+app_struct_t *__attribute__ ((persistent)) app_array[2] = { &app_struct_app_1, &app_struct_app_2 };
+app_struct_t *__attribute__ ((persistent)) active_app_array[2] = {};
+int __attribute__ ((persistent)) active_app_count = 0;
+
+int
+check_if_new(task_struct_t *task)
+{
+  for(int i = 0; i < active_task_count; i++) {
+    if(active_task_array[i] == task) {
+      return 0;
+    }
+  }
+  return 1;
+}
+void
+set_threshold(int threshold)
+{
+  return;
+}
+void
+heapify(task_struct_t *a[], int n)
+{
+  task_struct_t *item;
+  int k, i, j;
+  for(k = 1; k < n; k++) {
+    item = a[k];
+    i = k;
+    j = (i - 1) / 2;
+    while((i > 0) && (item->deadline > a[j]->deadline)) {
+      a[i] = a[j];
+      i = j;
+      j = (i - 1) / 2;
+    }
+    a[i] = item;
+  }
+}
+void
+adjust(task_struct_t *a[], int n)
+{
+  int i, j;
+  task_struct_t *item;
+  j = 0;
+  item = a[j];
+  i = 2 * j + 1;
+  while(i <= n - 1) {
+    if(i + 1 <= n - 1) {
+      if(a[i]->deadline < a[i + 1]->deadline) {
+        i++;
+      }
+    }
+    if(item->deadline < a[i]->deadline) {
+      a[j] = a[i];
+      j = i;
+      i = 2 * j + 1;
+    } else {
+      break;
+    }
+  }
+  a[j] = item;
+}
+void
+heapsort(task_struct_t *a[], int n)
+{
+  task_struct_t *t;
+  int i;
+  heapify(a, n);
+  for(i = n - 1; i > 0; i--) {
+    t = a[0];
+    a[0] = a[i];
+    a[i] = t;
+    adjust(a, i);
+  }
+}
+void
+initialize()
+{
+  siren_command("PRINTF: initialize after first boot\n");
+  siren_command("SET_TARDIS_VARIABLE: %u\n", &tardis_time);
+
+  app_struct_t *app = app_array[active_app_count];
+  app->isActive |= 0x1;
+  active_app_array[active_app_count] = app;
+
+  for(int i = 0; i < app->tasks_count; i++) {
+    active_task_array[active_task_count] = (app->app_tasks)[i];
+    active_task_count++;
+  }
+
+  task_struct_t *new_tasks[2];
+  int new_task_counter;
+  do {
+    new_task_counter = 0;
+    for(int i = 0; i < active_task_count; i++) {
+      task_struct_t *task = active_task_array[i];
+      for(int j = 0; j < task->in_set_count; j++) {
+        task_struct_t *in_task = task->in_set[j];
+        if(check_if_new(in_task)) {
+          new_tasks[new_task_counter] = in_task;
+          new_task_counter++;
+        }
+      }
+    }
+    for(int i = 0; i < new_task_counter; i++) {
+      active_task_array[active_task_count] = new_tasks[i];
+      active_task_count++;
+    }
+  } while(new_task_counter != 0);
+
+  int energy_prediction[2];
+  int max_energy_prediction = -10;
+  for(int i = 0; i < active_task_count; i++) {
+    energy_prediction[i] = active_task_array[i]->e_wc + 1.0 * active_task_array[i]->in_set_count;
+    max_energy_prediction = (((max_energy_prediction) > (energy_prediction[i])) ? (max_energy_prediction) : (energy_prediction[i]));
+  }
+
+  for(int i = 0; i < active_task_count; i++) {
+    if(active_task_array[i]->in_set_count == 0) {
+      active_task_array[i]->deadline = app->x_min;
+      active_task_array[i]->isEnabled |= 0x1;
+      enabled_task_array[enabled_task_count] = active_task_array[i];
+      enabled_task_count++;
+    }
+  }
+
+  set_threshold(max_energy_prediction + 0.0);
+  return;
+}
+void
+scheduler()
+{
+  task_struct_t next_task_struct;
+
+  siren_command("START_TIME: \n");
+  if(seen_resets != resets) {
+    seen_resets = resets;
+    if(next_task == 1) {
+      siren_command("PRINTF: restore\n");
+      g_task_1 = var_struct_task_1.version_array[(var_struct_task_1.window_begin_index + 0) % (var_struct_task_1.versions_count + 1)];
+    }
+  }
+  siren_command("GET_TIME: %u\n", &delta_time);
+  siren_command("TEST_EXECUTION: %u\n", delta_time);
+  while(1) {
+    siren_command("START_TIME: \n");
+
+    heapsort(enabled_task_array, enabled_task_count);
+
+    next_task_struct = *(enabled_task_array[0]);
+    (next_task_struct.function_pointer)();
+
+    for(int i = 1; i < enabled_task_count; i++) {
+      enabled_task_array[i]->deadline -= delta_time;
+    }
+    siren_command("GET_TIME: %u\n", &delta_time);
+    siren_command("TEST_EXECUTION: %u, scheduler\n", delta_time);
+  }
+}
+int
+main()
+{
+  siren_command("START_TIME: \n");
+  WDTCTL = WDTPW | WDTHOLD;
+
+  resets++;
+  if(resets == 0) {
+    initialize();
+  } else {
+
+    siren_command("PRINTF: restarted after %l microseconds\n", tardis_time);
+    for(int i = 0; i < enabled_task_count; i++) {
+      enabled_task_array[i]->deadline -= tardis_time;
+    }
+  }
+
+  if(resets == 10) {
+    siren_command("PRINTF: done, restarted %u\r\n", resets);
+    return 0;
+  }
+  siren_command("GET_TIME: %u\n", &delta_time);
+  siren_command("PRINTF: %u\n", delta_time);
+  siren_command("TEST_EXECUTION: %u\n", delta_time);
+
+  scheduler();
+  return 0;
+}

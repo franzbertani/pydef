@@ -165,6 +165,7 @@ void initialize(){
 void scheduler(){
     task_struct_t next_task_struct;
 
+    siren_command("START_TIME: \n");
     if(seen_resets != resets){ // a reset occurred
         seen_resets = resets;
         if(next_task == 1){
@@ -172,7 +173,10 @@ void scheduler(){
             RESTORE(g_task_1, var_struct_task_1, 0);
         }
     }
+    siren_command("GET_TIME: %u\n", &delta_time);
+    siren_command("TEST_EXECUTION: %u, scheduler restore\n", delta_time);
     while(1){
+        siren_command("START_TIME: \n");
         //sort array of enabled tasks based on deadlines
         heapsort(enabled_task_array, enabled_task_count);
         //select and exec task with lowest deadline
@@ -182,11 +186,14 @@ void scheduler(){
         //subtract to all deadlines of other tasks exec time (not to the first which we just run)
         for(int i=1; i<enabled_task_count; i++)
             enabled_task_array[i]->deadline -= delta_time;
+        siren_command("GET_TIME: %u\n", &delta_time);
+        siren_command("TEST_EXECUTION: %u, schedule\n", delta_time);
     }
 }
 
 
 int main(){
+    siren_command("START_TIME: \n");
     WDTCTL = WDTPW | WDTHOLD;
 
     resets++;
@@ -204,6 +211,10 @@ int main(){
         siren_command("PRINTF: done, restarted %u\r\n", resets);
         return 0;
     }
+    siren_command("GET_TIME: %u\n", &delta_time);
+    siren_command("PRINTF: %u\n", delta_time);
+    siren_command("TEST_EXECUTION: %u, main\n", delta_time);
+
 
     scheduler();
     return 0;
