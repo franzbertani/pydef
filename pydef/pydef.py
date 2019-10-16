@@ -75,5 +75,5 @@ T.generate_tasks_defines(H)
 A.generate_apps_defines(H)
 H.write_file("header.h")
 
-# nx.draw(T.get_tasks_graph(), with_labels=True)
-# plt.show()
+nx.draw(T.get_tasks_graph(), with_labels=True)
+plt.show()

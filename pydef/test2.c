@@ -18,6 +18,7 @@ int __attribute__ ((persistent)) seen_resets = 0;
 int __attribute__ ((persistent)) next_task = 0;
 int __attribute__ ((persistent)) tardis_time = 0;
 int __attribute__ ((persistent)) delta_time = 0;
+float __attribute__ ((persistent)) tputs[2] = {0,0};
 
 BEGIN_TASK_task_1
     siren_command("PRINTF: running task 1\n");
@@ -31,6 +32,13 @@ BEGIN_TASK_task_2
     int t2_output;
     t2_output = task_1 + 10;
     RETURN_task_2
+END_TASK
+
+BEGIN_TASK_task_3
+    siren_command("PRINTF: running task 3\n");
+    int t3_output;
+    t3_output = task_1 * 10;
+    RETURN_task_3
 END_TASK
 
 TASKS_STRUCTS
@@ -103,7 +111,6 @@ void heapsort(task_struct_t* a[],int n) {
 
 /* END OF HEAPSORT IMPLEMENTATION */
 
-
 void initialize(){
     siren_command("PRINTF: initialize after first boot\n");
     siren_command("SET_TARDIS_VARIABLE: %u\n", &tardis_time);
@@ -157,6 +164,8 @@ void initialize(){
         }
     }
 
+    siren_command("PRINTF: %u\n", active_task_count);
+
     /* currently just a stub L:23*/
     set_threshold(max_energy_prediction + AVG_OVERHEAD);
     return;
@@ -165,7 +174,7 @@ void initialize(){
 void scheduler(){
     task_struct_t next_task_struct;
 
-    siren_command("START_TIME: \n");
+    siren_command("START_TIME: sched\n");
     if(seen_resets != resets){ // a reset occurred
         seen_resets = resets;
         if(next_task == 1){
@@ -173,28 +182,32 @@ void scheduler(){
             RESTORE(g_task_1, var_struct_task_1, 0);
         }
     }
-    siren_command("GET_TIME: %u\n", &delta_time);
+    siren_command("GET_TIME: sched-%u\n", &delta_time);
     siren_command("TEST_EXECUTION: %u, scheduler restore\n", delta_time);
     while(1){
-        siren_command("START_TIME: \n");
+        siren_command("START_TIME: sched\n");
         //sort array of enabled tasks based on deadlines
         heapsort(enabled_task_array, enabled_task_count);
+        siren_command("PRINTF: selected task deadline %u\n", enabled_task_array[0]->deadline);
         //select and exec task with lowest deadline
         next_task_struct = *(enabled_task_array[0]);
         (next_task_struct.function_pointer)();
 
         //subtract to all deadlines of other tasks exec time (not to the first which we just run)
+        siren_command("PRINTF: delta_time = %u\n", delta_time);
+        siren_command("PRINTF: enabled_tasks %u\n", enabled_task_count);
         for(int i=1; i<enabled_task_count; i++)
             enabled_task_array[i]->deadline -= delta_time;
-        siren_command("GET_TIME: %u\n", &delta_time);
+        siren_command("GET_TIME: sched-%u\n", &delta_time);
         siren_command("TEST_EXECUTION: %u, schedule\n", delta_time);
     }
 }
 
 
 int main(){
-    siren_command("START_TIME: \n");
+    siren_command("START_TIME: main\n");
     WDTCTL = WDTPW | WDTHOLD;
+    siren_command("SET_VON: 30\n");
 
     resets++;
     if(resets==0){
@@ -211,7 +224,7 @@ int main(){
         siren_command("PRINTF: done, restarted %u\r\n", resets);
         return 0;
     }
-    siren_command("GET_TIME: %u\n", &delta_time);
+    siren_command("GET_TIME: main-%u\n", &delta_time);
     siren_command("PRINTF: %u\n", delta_time);
     siren_command("TEST_EXECUTION: %u, main\n", delta_time);
 

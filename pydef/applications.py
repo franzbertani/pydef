@@ -10,6 +10,7 @@ class Application:
         self.id = id
         self.tasks_dict = {}
         self._initial_task = None
+        self._final_task = None
         self.x_min = 0
 
     def __str__(self):
@@ -49,9 +50,26 @@ class Application:
             return
         self._initial_task = task_id
 
+    def set_final_task(self, task_id):
+        """Set the private attribute `_final_task` checking its validity
+
+        Parameters
+        ----------
+
+        task_id : str
+            initial task unique id, must be one of the application tasks
+            (i.e. a task contained in application tasks dictionary)
+        """
+        if task_id not in self.tasks_dict:
+            print("ERROR: initial task %s must be an application task" % (task_id))
+            return
+        self._final_task = task_id
+
     def get_initial_task(self):
         return self._initial_task
 
+    def get_final_task(self):
+        return self._final_task
 
 class Applications:
 
@@ -81,6 +99,7 @@ class Applications:
             new_app.x_min = x_min
             new_app.build_tasks_dict(app.get("tasks", []), tasks_dict)
             new_app.set_initial_task(app["initial_task"])
+            new_app.set_final_task(app["final_task"])
             self.apps_dict[app["id"]] = new_app
 
     def get_apps_dict(self):
@@ -111,6 +130,8 @@ class Applications:
             app_define = app_define.replace("TASKS", tasks_string)
             app_define = app_define.replace(
                 "INITIAL_TASK", "&task_struct_%s" % (v.get_initial_task(),))
+            app_define = app_define.replace(
+                "FINAL_TASK", "&task_struct_%s" % (v.get_final_task(),))
             structs.append(app_define)
         define_string = "\t\\\n\t".join(structs)
         print(define_string)

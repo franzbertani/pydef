@@ -15,7 +15,6 @@ task_struct_template = "templates/tasks_struct_define.c"
 task_enabler_template = "templates/task_enabler.c"
 extern_variables_template = "templates/extern_variables_template.c"
 
-
 class Tasks:
     """A class to store set of tasks"""
 
@@ -159,7 +158,7 @@ class Tasks:
                         dep.task_id,
                         "g_%s" % (dep.task_id)))
             define_value.append(
-                'siren_command("START_TIME: \\n");')
+                'siren_command("START_TIME: task\\n");')
             header.add_define((define_key, "\t\\\n\t".join(define_value)))
 
     def add_tasks_end(self, header):
@@ -242,8 +241,7 @@ class Tasks:
             task_enabler_string = task_enabler_string.replace(
                 "DEADLINES_UPDATE", self.add_deadline_restore(child_name))
 
-
-        function_string += task_enabler_string
+            function_string += task_enabler_string
 
         return function_string
 
