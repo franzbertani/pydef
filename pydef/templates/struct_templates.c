@@ -13,6 +13,7 @@ typedef struct app_struct {
     task_struct_t* final_task;
     int tasks_count;
     unsigned long int x_min;
+    char x_ok;
     char isActive;
 } app_struct_t;
 

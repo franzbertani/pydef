@@ -1,1 +1,1 @@
-app_struct_t __attribute__ ((persistent)) app_struct_APP = {.x_min = TP, .tasks_count = TASKS_COUNT, .app_tasks = {TASKS}, .initial_task = INITIAL_TASK, .final_task = FINAL_TASK, .isActive = 0x0};
+app_struct_t __attribute__ ((persistent)) app_struct_APP = {.x_min = TP, .x_ok = 0, .tasks_count = TASKS_COUNT, .app_tasks = {TASKS}, .initial_task = INITIAL_TASK, .final_task = FINAL_TASK, .isActive = 0x0};

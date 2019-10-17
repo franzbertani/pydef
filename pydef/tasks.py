@@ -13,6 +13,7 @@ return_template = "templates/return_template.c"
 tasks_array = "templates/tasks_array_template.c"
 task_struct_template = "templates/tasks_struct_define.c"
 task_enabler_template = "templates/task_enabler.c"
+task_tput_update_template = "templates/tput_update.c"
 extern_variables_template = "templates/extern_variables_template.c"
 
 class Tasks:
@@ -245,6 +246,15 @@ class Tasks:
 
         return function_string
 
+    def add_throughput_update(self, task_id, app_id):
+        template = ""
+        with open(task_tput_update_template, "r") as template_file:
+            template = template_file.read().replace("\n", "\t\\\n\t")
+            template = template.replace("ORIGINAL_DEADLINE", str(self.apps_dict[app_id].x_min))
+            template = template.replace("TASK_ID", task_id)
+            template = template.replace("APP_ID", app_id)
+        return template
+
     def add_tasks_returns(self, header):
         """Generates the header define for tasks return statement
 
@@ -261,8 +271,13 @@ class Tasks:
             define_key = "RETURN_%s" % (task_id)
             define_value = template.replace("TASK", task_id).replace(
                 "LOCAL_VAR", task_props.output.name)
+            for app in task_props.apps:
+                if task_id == self.apps_dict[app].get_final_task():
+                    define_value += self.add_throughput_update(task_id, app)
+                    break
             define_value += self.add_tasks_enabler_function(task_id)
             define_value += self.add_deadline_restore(task_id, subtract_exec_time=False)
+            # compute and update the app througput if task_id is last
             header.add_define((define_key, define_value))
 
     def add_tasks_structs(self, header):

@@ -13,6 +13,7 @@ typedef struct app_struct {
     task_struct_t* final_task;
     int tasks_count;
     unsigned long int x_min;
+    char x_ok;
     char isActive;
 } app_struct_t;
 
@@ -116,6 +117,18 @@ typedef struct app_struct {
 	/* siren_command("PRINTF: var_struct_task_2 :\r\n"); */	\
 	/* for(int i=0; i<var_struct_task_2.versions_count; i++) */	\
 	/*     siren_command("PRINTF: %u\r\n", var_struct_task_2.version_array[(var_struct_task_2.window_begin_index + i) % (var_struct_task_2.versions_count + 1)]); */	\
+	unsigned long int value = 1000000 - task_struct_task_2.deadline - delta_time;	\
+	siren_command("PRINTF: updating tput aftrer task_2\n");	\
+	if (value < 0){	\
+	    siren_command("PRINTF: underperforming\n");	\
+	    app_struct_app_1.x_ok = -1;	\
+	} else if (value > 0) {	\
+	    siren_command("PRINTF: overperforming\n");	\
+	    app_struct_app_1.x_ok = 1;	\
+	} else {	\
+	    siren_command("PRINTF: performance ok\n");	\
+	    app_struct_app_1.x_ok = 0;	\
+	}	\
 	if(app_struct_app_1.isActive) task_struct_task_2.deadline = 1000000;
 #define RETURN_task_3 g_task_3 = t3_output;	\
 	var_struct_task_3.version_array[var_struct_task_3.write_index] = g_task_3;	\
@@ -135,6 +148,18 @@ typedef struct app_struct {
 	/* siren_command("PRINTF: var_struct_task_3 :\r\n"); */	\
 	/* for(int i=0; i<var_struct_task_3.versions_count; i++) */	\
 	/*     siren_command("PRINTF: %u\r\n", var_struct_task_3.version_array[(var_struct_task_3.window_begin_index + i) % (var_struct_task_3.versions_count + 1)]); */	\
+	unsigned long int value = 333333 - task_struct_task_3.deadline - delta_time;	\
+	siren_command("PRINTF: updating tput aftrer task_3\n");	\
+	if (value < 0){	\
+	    siren_command("PRINTF: underperforming\n");	\
+	    app_struct_app_2.x_ok = -1;	\
+	} else if (value > 0) {	\
+	    siren_command("PRINTF: overperforming\n");	\
+	    app_struct_app_2.x_ok = 1;	\
+	} else {	\
+	    siren_command("PRINTF: performance ok\n");	\
+	    app_struct_app_2.x_ok = 0;	\
+	}	\
 	if(app_struct_app_2.isActive) task_struct_task_3.deadline = 333333;
 #define END_TASK }
 
@@ -149,8 +174,8 @@ typedef struct app_struct {
 	
 #define TASK_COUNT 3
 #define APPS_COUNT 2
-#define APP_STRUCTS app_struct_t __attribute__ ((persistent)) app_struct_app_1 = {.x_min = 1000000, .tasks_count = 2, .app_tasks = {&task_struct_task_1, &task_struct_task_2}, .initial_task = &task_struct_task_1, .final_task = &task_struct_task_2, .isActive = 0x0};	\
-	app_struct_t __attribute__ ((persistent)) app_struct_app_2 = {.x_min = 333333, .tasks_count = 2, .app_tasks = {&task_struct_task_1, &task_struct_task_3}, .initial_task = &task_struct_task_1, .final_task = &task_struct_task_3, .isActive = 0x0};
+#define APP_STRUCTS app_struct_t __attribute__ ((persistent)) app_struct_app_1 = {.x_min = 1000000, .x_ok = 0, .tasks_count = 2, .app_tasks = {&task_struct_task_1, &task_struct_task_2}, .initial_task = &task_struct_task_1, .final_task = &task_struct_task_2, .isActive = 0x0};	\
+	app_struct_t __attribute__ ((persistent)) app_struct_app_2 = {.x_min = 333333, .x_ok = 0, .tasks_count = 2, .app_tasks = {&task_struct_task_1, &task_struct_task_3}, .initial_task = &task_struct_task_1, .final_task = &task_struct_task_3, .isActive = 0x0};
 #define APP_ARRAY app_struct_t* __attribute__ ((persistent)) app_array[2] = {&app_struct_app_1, &app_struct_app_2};	\
 	app_struct_t* __attribute__ ((persistent)) active_app_array[2] = {};	\
 	int __attribute__ ((persistent)) active_app_count = 0;	\
