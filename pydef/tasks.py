@@ -16,6 +16,7 @@ task_enabler_template = "templates/task_enabler.c"
 task_tput_update_template = "templates/tput_update.c"
 extern_variables_template = "templates/extern_variables_template.c"
 
+
 class Tasks:
     """A class to store set of tasks"""
 
@@ -204,8 +205,6 @@ class Tasks:
 
         return deadline_string
 
-
-
     def add_tasks_enabler_function(self, father_task_id):
         """Returns the string that enable all child tasks
 
@@ -230,7 +229,7 @@ class Tasks:
         task_enabler_string = ""
 
         for child_name in successors:
-            #enable tasks
+            # enable tasks
             task_enabler_string = template.replace(
                 "TASK_NAME", "task_struct_%s" % (child_name))
             app_struct_list = ["app_struct_%s.isActive" % (app_name)
@@ -238,7 +237,7 @@ class Tasks:
             task_enabler_string = task_enabler_string.replace(
                 "APP_CONDITION", " || ".join(app_struct_list))
 
-            #set deadlines for newly enabled tasks
+            # set deadlines for newly enabled tasks
             task_enabler_string = task_enabler_string.replace(
                 "DEADLINES_UPDATE", self.add_deadline_restore(child_name))
 
@@ -250,7 +249,8 @@ class Tasks:
         template = ""
         with open(task_tput_update_template, "r") as template_file:
             template = template_file.read().replace("\n", "\t\\\n\t")
-            template = template.replace("ORIGINAL_DEADLINE", str(self.apps_dict[app_id].x_min))
+            template = template.replace(
+                "ORIGINAL_DEADLINE", str(self.apps_dict[app_id].x_min))
             template = template.replace("TASK_ID", task_id)
             template = template.replace("APP_ID", app_id)
         return template
@@ -276,7 +276,8 @@ class Tasks:
                     define_value += self.add_throughput_update(task_id, app)
                     break
             define_value += self.add_tasks_enabler_function(task_id)
-            define_value += self.add_deadline_restore(task_id, subtract_exec_time=False)
+            define_value += self.add_deadline_restore(
+                task_id, subtract_exec_time=False)
             # compute and update the app througput if task_id is last
             header.add_define((define_key, define_value))
 

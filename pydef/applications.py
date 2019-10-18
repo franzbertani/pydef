@@ -71,6 +71,7 @@ class Application:
     def get_final_task(self):
         return self._final_task
 
+
 class Applications:
 
     def __init__(self):
@@ -95,7 +96,8 @@ class Applications:
             new_app = Application(app["id"])
             x_min = app.get("x_min", 0)
             if x_min > 0:
-                x_min = int((1/x_min) * 1000000) #deadline for tasks in micro seconds
+                # deadline for tasks in micro seconds
+                x_min = int((1/x_min) * 1000000)
             new_app.x_min = x_min
             new_app.build_tasks_dict(app.get("tasks", []), tasks_dict)
             new_app.set_initial_task(app["initial_task"])
@@ -104,8 +106,6 @@ class Applications:
 
     def get_apps_dict(self):
         return self.apps_dict
-
-
 
     def add_apps_structs(self, header):
         """Generates the header defines to declare an app struct for each app
