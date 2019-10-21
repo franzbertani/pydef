@@ -31,6 +31,7 @@ BEGIN_TASK_task_2
     siren_command("PRINTF: running task 2\n");
     int t2_output;
     t2_output = task_1 + 10;
+    siren_command("LOG_EVENT: end app1\n");
     RETURN_task_2
 END_TASK
 
@@ -38,6 +39,7 @@ BEGIN_TASK_task_3
     siren_command("PRINTF: running task 3\n");
     int t3_output;
     t3_output = task_1 * 10;
+    siren_command("LOG_EVENT: end app2\n");
     RETURN_task_3
 END_TASK
 
@@ -227,7 +229,6 @@ int main(){
     siren_command("GET_TIME: main-%u\n", &delta_time);
     siren_command("PRINTF: %u\n", delta_time);
     siren_command("TEST_EXECUTION: %u, main\n", delta_time);
-
 
     scheduler();
     return 0;
