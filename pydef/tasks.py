@@ -160,7 +160,7 @@ class Tasks:
                         dep.task_id,
                         "g_%s" % (dep.task_id)))
             define_value.append(
-                'siren_command("START_TIME: task\\n");')
+                'siren_command("START_CCOUNT: task\\n");')
             header.add_define((define_key, "\t\\\n\t".join(define_value)))
 
     def add_tasks_end(self, header):
@@ -188,8 +188,8 @@ class Tasks:
             app_id, task_id, self.apps_dict[app_id].x_min)
         """
 
-        deadline_string = "if(app_struct_%s.isActive) task_struct_%s.deadline = %s;" % (
-            app_id, task_id, self.apps_dict[app_id].x_min)
+        deadline_string = "if(app_struct_%s.isActive[app_struct_%s.isActiveVersion]) { task_struct_%s.deadline[!task_struct_%s.deadlineVersion & 0x1] = %s; task_struct_%s.deadlineVersion = !task_struct_%s.deadlineVersion & 0x1;}" % (
+            app_id, app_id, task_id, task_id, self.apps_dict[app_id].x_min, task_id, task_id)
 
         for app_id in app_list_iter:
             """ SAME AS BEFORE
@@ -200,8 +200,8 @@ class Tasks:
                 deadline_string += "else if(app_struct_%s.isActive) task_struct_%s.deadline = %s;" % (
                 app_id, task_id, self.apps_dict[app_id].x_min)
             """
-            deadline_string += "else if(app_struct_%s.isActive) task_struct_%s.deadline = %s;" % (
-                app_id, task_id, self.apps_dict[app_id].x_min)
+            deadline_string += "else if(app_struct_%s.isActive[app_struct_%s.isActiveVersion]) { task_struct_%s.deadline[!task_struct_%s.deadlineVersion & 0x1] = %s; task_struct_%s.deadlineVersion = !task_struct_%s.deadlineVersion & 0x1;}" % (
+                app_id, app_id, task_id, task_id, self.apps_dict[app_id].x_min, task_id, task_id)
 
         return deadline_string
 
@@ -232,7 +232,7 @@ class Tasks:
             # enable tasks
             task_enabler_string = template.replace(
                 "TASK_NAME", "task_struct_%s" % (child_name))
-            app_struct_list = ["app_struct_%s.isActive" % (app_name)
+            app_struct_list = ["app_struct_%s.isActive[app_struct_%s.isActiveVersion]" % (app_name, app_name)
                                for app_name in self.tasks_dict[child_name].apps]
             task_enabler_string = task_enabler_string.replace(
                 "APP_CONDITION", " || ".join(app_struct_list))

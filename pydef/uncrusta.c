@@ -10,9 +10,13 @@ typedef struct task_struct {
     int e_wc;
     struct task_struct* in_set[3];
     int in_set_count;
-    unsigned long int deadline;
+    unsigned long int deadline[2];
+    short int deadlineVersion;
     void (*function_pointer)();
-    char isEnabled;
+    char isEnabled[2];
+    short int isEnabledVersion;
+    char isActive[2];
+    short int isActiveVersion;
 } task_struct_t;
 
 typedef struct app_struct {
@@ -21,8 +25,10 @@ typedef struct app_struct {
     task_struct_t* final_task;
     int tasks_count;
     unsigned long int x_min;
-    char x_ok;
-    char isActive;
+    char x_ok[2];
+    short int x_okVersion;
+    char isActive[2];
+    short int isActiveVersion;
 } app_struct_t;
 # 2 "test2.c" 2
 # 1 "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stdio.h" 1 3 4
@@ -1921,32 +1927,33 @@ int __attribute__ ((persistent)) seen_resets = 0;
 int __attribute__ ((persistent)) next_task = 0;
 int __attribute__ ((persistent)) tardis_time = 0;
 int __attribute__ ((persistent)) delta_time = 0;
-float __attribute__ ((persistent)) tputs[2] = {0,0};
 
 void task_1(){ siren_command("START_TIME: task\n");
     siren_command("PRINTF: running task 1\n");
     int t1_out;
     t1_out = get_sample();
-    g_task_1 = t1_out; var_struct_task_1.version_array[var_struct_task_1.write_index] = g_task_1; var_struct_task_1.write_index = (var_struct_task_1.write_index + 1) % (var_struct_task_1.versions_count + 1); if(var_struct_task_1.is_full){ var_struct_task_1.window_begin_index = (var_struct_task_1.window_begin_index + 1) % (var_struct_task_1.versions_count + 1); } else if(var_struct_task_1.write_index == 0){ var_struct_task_1.is_full = 1; var_struct_task_1.window_begin_index = (var_struct_task_1.window_begin_index + 1) % (var_struct_task_1.versions_count + 1); } siren_command("GET_TIME: task- %u\n", &delta_time); siren_command("TEST_EXECUTION: %u\n", delta_time); extern task_struct_t task_struct_task_2; if(!(task_struct_task_2.isEnabled) && (app_struct_app_1.isActive)){ task_struct_task_2.isEnabled |= 0x1; enabled_task_array[enabled_task_count] = &task_struct_task_2; enabled_task_count++; if(app_struct_app_1.isActive) task_struct_task_2.deadline = 1000000; } extern task_struct_t task_struct_task_3; if(!(task_struct_task_3.isEnabled) && (app_struct_app_2.isActive)){ task_struct_task_3.isEnabled |= 0x1; enabled_task_array[enabled_task_count] = &task_struct_task_3; enabled_task_count++; if(app_struct_app_2.isActive) task_struct_task_3.deadline = 333333; } if(app_struct_app_2.isActive) task_struct_task_1.deadline = 333333;else if(app_struct_app_1.isActive) task_struct_task_1.deadline = 1000000;
+    g_task_1 = t1_out; var_struct_task_1.version_array[var_struct_task_1.write_index] = g_task_1; var_struct_task_1.write_index = (var_struct_task_1.write_index + 1) % (var_struct_task_1.versions_count + 1); if(var_struct_task_1.is_full){ var_struct_task_1.window_begin_index = (var_struct_task_1.window_begin_index + 1) % (var_struct_task_1.versions_count + 1); } else if(var_struct_task_1.write_index == 0){ var_struct_task_1.is_full = 1; var_struct_task_1.window_begin_index = (var_struct_task_1.window_begin_index + 1) % (var_struct_task_1.versions_count + 1); } siren_command("GET_CCOUNT: task-%u\n", &delta_time); siren_command("TEST_EXECUTION_CCOUNT: %u\n", delta_time); extern task_struct_t task_struct_task_2; short int task_struct_task_2_enVersion = task_struct_task_2.isEnabledVersion; if(!(task_struct_task_2.isEnabled[task_struct_task_2_enVersion]) && (app_struct_app_1.isActive[app_struct_app_1.isActiveVersion])){ task_struct_task_2.isEnabled[!task_struct_task_2_enVersion & 0x1] |= 0x1; enabled_task_array[enabled_task_count] = &task_struct_task_2; enabled_task_count++; task_struct_task_2.isEnabledVersion = !task_struct_task_2_enVersion & 0x1; if(app_struct_app_1.isActive[app_struct_app_1.isActiveVersion]) { task_struct_task_2.deadline[!task_struct_task_2.deadlineVersion & 0x1] = 1000000; task_struct_task_2.deadlineVersion = !task_struct_task_2.deadlineVersion & 0x1;} } extern task_struct_t task_struct_task_3; short int task_struct_task_3_enVersion = task_struct_task_3.isEnabledVersion; if(!(task_struct_task_3.isEnabled[task_struct_task_3_enVersion]) && (app_struct_app_2.isActive[app_struct_app_2.isActiveVersion])){ task_struct_task_3.isEnabled[!task_struct_task_3_enVersion & 0x1] |= 0x1; enabled_task_array[enabled_task_count] = &task_struct_task_3; enabled_task_count++; task_struct_task_3.isEnabledVersion = !task_struct_task_3_enVersion & 0x1; if(app_struct_app_2.isActive[app_struct_app_2.isActiveVersion]) { task_struct_task_3.deadline[!task_struct_task_3.deadlineVersion & 0x1] = 333333; task_struct_task_3.deadlineVersion = !task_struct_task_3.deadlineVersion & 0x1;} } if(app_struct_app_2.isActive[app_struct_app_2.isActiveVersion]) { task_struct_task_1.deadline[!task_struct_task_1.deadlineVersion & 0x1] = 333333; task_struct_task_1.deadlineVersion = !task_struct_task_1.deadlineVersion & 0x1;}else if(app_struct_app_1.isActive[app_struct_app_1.isActiveVersion]) { task_struct_task_1.deadline[!task_struct_task_1.deadlineVersion & 0x1] = 1000000; task_struct_task_1.deadlineVersion = !task_struct_task_1.deadlineVersion & 0x1;}
 }
 
 void task_2(){ int task_1 = g_task_1; siren_command("START_TIME: task\n");
     siren_command("PRINTF: running task 2\n");
     int t2_output;
     t2_output = task_1 + 10;
-    g_task_2 = t2_output; var_struct_task_2.version_array[var_struct_task_2.write_index] = g_task_2; var_struct_task_2.write_index = (var_struct_task_2.write_index + 1) % (var_struct_task_2.versions_count + 1); if(var_struct_task_2.is_full){ var_struct_task_2.window_begin_index = (var_struct_task_2.window_begin_index + 1) % (var_struct_task_2.versions_count + 1); } else if(var_struct_task_2.write_index == 0){ var_struct_task_2.is_full = 1; var_struct_task_2.window_begin_index = (var_struct_task_2.window_begin_index + 1) % (var_struct_task_2.versions_count + 1); } siren_command("GET_TIME: task- %u\n", &delta_time); siren_command("TEST_EXECUTION: %u\n", delta_time); unsigned long int value = 1000000 - task_struct_task_2.deadline - delta_time; siren_command("PRINTF: updating tput aftrer task_2\n"); if (value < 0){ siren_command("PRINTF: overperf\n"); app_struct_app_1.x_ok = -1; } else if (value > 0) { siren_command("PRINTF: underperf\n"); app_struct_app_1.x_ok = 1; } else { siren_command("PRINTF: ok\n"); app_struct_app_1.x_ok = 0; } if(app_struct_app_1.isActive) task_struct_task_2.deadline = 1000000;
+    siren_command("LOG_EVENT: end app1\n");
+    g_task_2 = t2_output; var_struct_task_2.version_array[var_struct_task_2.write_index] = g_task_2; var_struct_task_2.write_index = (var_struct_task_2.write_index + 1) % (var_struct_task_2.versions_count + 1); if(var_struct_task_2.is_full){ var_struct_task_2.window_begin_index = (var_struct_task_2.window_begin_index + 1) % (var_struct_task_2.versions_count + 1); } else if(var_struct_task_2.write_index == 0){ var_struct_task_2.is_full = 1; var_struct_task_2.window_begin_index = (var_struct_task_2.window_begin_index + 1) % (var_struct_task_2.versions_count + 1); } siren_command("GET_CCOUNT: task-%u\n", &delta_time); siren_command("TEST_EXECUTION_CCOUNT: %u\n", delta_time); unsigned long int value = 1000000 - task_struct_task_2.deadline[task_struct_task_2.deadlineVersion] - delta_time; siren_command("PRINTF: updating tput aftrer task_2\n"); if (value < 0){ siren_command("PRINTF: underperforming\n"); app_struct_app_1.x_ok[!app_struct_app_1.x_okVersion & 0x1] = -1; app_struct_app_1.x_okVersion = !app_struct_app_1.x_okVersion & 0x1; } else if (value > 0) { siren_command("PRINTF: overperforming\n"); app_struct_app_1.x_ok[!app_struct_app_1.x_okVersion & 0x1] = 1; app_struct_app_1.x_okVersion = !app_struct_app_1.x_okVersion & 0x1; } else { siren_command("PRINTF: performance ok\n"); app_struct_app_1.x_ok[!app_struct_app_1.x_okVersion & 0x1] = 0; app_struct_app_1.x_okVersion = !app_struct_app_1.x_okVersion & 0x1; } if(app_struct_app_1.isActive[app_struct_app_1.isActiveVersion]) { task_struct_task_2.deadline[!task_struct_task_2.deadlineVersion & 0x1] = 1000000; task_struct_task_2.deadlineVersion = !task_struct_task_2.deadlineVersion & 0x1;}
 }
 
 void task_3(){ int task_1 = g_task_1; siren_command("START_TIME: task\n");
     siren_command("PRINTF: running task 3\n");
     int t3_output;
     t3_output = task_1 * 10;
-    g_task_3 = t3_output; var_struct_task_3.version_array[var_struct_task_3.write_index] = g_task_3; var_struct_task_3.write_index = (var_struct_task_3.write_index + 1) % (var_struct_task_3.versions_count + 1); if(var_struct_task_3.is_full){ var_struct_task_3.window_begin_index = (var_struct_task_3.window_begin_index + 1) % (var_struct_task_3.versions_count + 1); } else if(var_struct_task_3.write_index == 0){ var_struct_task_3.is_full = 1; var_struct_task_3.window_begin_index = (var_struct_task_3.window_begin_index + 1) % (var_struct_task_3.versions_count + 1); } siren_command("GET_TIME: task- %u\n", &delta_time); siren_command("TEST_EXECUTION: %u\n", delta_time); unsigned long int value = 333333 - task_struct_task_3.deadline - delta_time; siren_command("PRINTF: updating tput aftrer task_3\n"); if (value < 0){ siren_command("PRINTF: overperf\n"); app_struct_app_2.x_ok = -1; } else if (value > 0) { siren_command("PRINTF: underperf\n"); app_struct_app_2.x_ok = 1; } else { siren_command("PRINTF: ok\n"); app_struct_app_2.x_ok = 0; } if(app_struct_app_2.isActive) task_struct_task_3.deadline = 333333;
+    siren_command("LOG_EVENT: end app2\n");
+    g_task_3 = t3_output; var_struct_task_3.version_array[var_struct_task_3.write_index] = g_task_3; var_struct_task_3.write_index = (var_struct_task_3.write_index + 1) % (var_struct_task_3.versions_count + 1); if(var_struct_task_3.is_full){ var_struct_task_3.window_begin_index = (var_struct_task_3.window_begin_index + 1) % (var_struct_task_3.versions_count + 1); } else if(var_struct_task_3.write_index == 0){ var_struct_task_3.is_full = 1; var_struct_task_3.window_begin_index = (var_struct_task_3.window_begin_index + 1) % (var_struct_task_3.versions_count + 1); } siren_command("GET_CCOUNT: task-%u\n", &delta_time); siren_command("TEST_EXECUTION_CCOUNT: %u\n", delta_time); unsigned long int value = 333333 - task_struct_task_3.deadline[task_struct_task_3.deadlineVersion] - delta_time; siren_command("PRINTF: updating tput aftrer task_3\n"); if (value < 0){ siren_command("PRINTF: underperforming\n"); app_struct_app_2.x_ok[!app_struct_app_2.x_okVersion & 0x1] = -1; app_struct_app_2.x_okVersion = !app_struct_app_2.x_okVersion & 0x1; } else if (value > 0) { siren_command("PRINTF: overperforming\n"); app_struct_app_2.x_ok[!app_struct_app_2.x_okVersion & 0x1] = 1; app_struct_app_2.x_okVersion = !app_struct_app_2.x_okVersion & 0x1; } else { siren_command("PRINTF: performance ok\n"); app_struct_app_2.x_ok[!app_struct_app_2.x_okVersion & 0x1] = 0; app_struct_app_2.x_okVersion = !app_struct_app_2.x_okVersion & 0x1; } if(app_struct_app_2.isActive[app_struct_app_2.isActiveVersion]) { task_struct_task_3.deadline[!task_struct_task_3.deadlineVersion & 0x1] = 333333; task_struct_task_3.deadlineVersion = !task_struct_task_3.deadlineVersion & 0x1;}
 }
 
-task_struct_t __attribute__ ((persistent)) task_struct_task_1 = {.e_wc = 450, .in_set = {}, .in_set_count = 0, .function_pointer = &task_1, .isEnabled = 0x0}; task_struct_t __attribute__ ((persistent)) task_struct_task_3 = {.e_wc = 250, .in_set = {&task_struct_task_1}, .in_set_count = 1, .function_pointer = &task_3, .isEnabled = 0x0}; task_struct_t __attribute__ ((persistent)) task_struct_task_2 = {.e_wc = 150, .in_set = {&task_struct_task_1}, .in_set_count = 1, .function_pointer = &task_2, .isEnabled = 0x0};
+task_struct_t __attribute__ ((persistent)) task_struct_task_1 = {.e_wc = 450, .in_set = {}, .in_set_count = 0, .function_pointer = &task_1, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0}; task_struct_t __attribute__ ((persistent)) task_struct_task_3 = {.e_wc = 250, .in_set = {&task_struct_task_1}, .in_set_count = 1, .function_pointer = &task_3, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0}; task_struct_t __attribute__ ((persistent)) task_struct_task_2 = {.e_wc = 150, .in_set = {&task_struct_task_1}, .in_set_count = 1, .function_pointer = &task_2, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0};
 task_struct_t* __attribute__ ((persistent)) task_array[3] = {&task_struct_task_1, &task_struct_task_2, &task_struct_task_3}; task_struct_t* __attribute__ ((persistent)) active_task_array[3] = {}; int __attribute__ ((persistent)) active_task_count = 0; task_struct_t* __attribute__ ((persistent)) enabled_task_array[3] = {}; int __attribute__ ((persistent)) enabled_task_count = 0;
-app_struct_t __attribute__ ((persistent)) app_struct_app_1 = {.x_min = 1000000, .x_ok = 0, .tasks_count = 2, .app_tasks = {&task_struct_task_1, &task_struct_task_2}, .initial_task = &task_struct_task_1, .final_task = &task_struct_task_2, .isActive = 0x0}; app_struct_t __attribute__ ((persistent)) app_struct_app_2 = {.x_min = 333333, .x_ok = 0, .tasks_count = 2, .app_tasks = {&task_struct_task_1, &task_struct_task_3}, .initial_task = &task_struct_task_1, .final_task = &task_struct_task_3, .isActive = 0x0};
+app_struct_t __attribute__ ((persistent)) app_struct_app_1 = {.x_min = 1000000, .x_ok = {0,0}, .x_okVersion = 0x0, .tasks_count = 2, .app_tasks = {&task_struct_task_1, &task_struct_task_2}, .initial_task = &task_struct_task_1, .final_task = &task_struct_task_2, .isActive = {0x0, 0x0}, .isActiveVersion = 0x0}; app_struct_t __attribute__ ((persistent)) app_struct_app_2 = {.x_min = 333333, .x_ok = {0,0}, .x_okVersion = 0x0, .tasks_count = 2, .app_tasks = {&task_struct_task_1, &task_struct_task_3}, .initial_task = &task_struct_task_1, .final_task = &task_struct_task_3, .isActive = {0x0, 0x0}, .isActiveVersion = 0x0};
 app_struct_t* __attribute__ ((persistent)) app_array[2] = {&app_struct_app_1, &app_struct_app_2}; app_struct_t* __attribute__ ((persistent)) active_app_array[2] = {}; int __attribute__ ((persistent)) active_app_count = 0;
 
 int check_if_new(task_struct_t *task){
@@ -1958,9 +1965,9 @@ int check_if_new(task_struct_t *task){
 }
 
 void set_threshold(int threshold){
+    siren_command("SET_VON: %u\n",threshold);
     return;
 }
-
 
 
 
@@ -2020,10 +2027,15 @@ void initialize(){
 
 
     app_struct_t *app = app_array[active_app_count];
-    app->isActive |= 0x1;
+    short int version = app->isActiveVersion;
+    app->isActive[!version & 0x1] |= 0x1;
     active_app_array[active_app_count] = app;
+    app->isActiveVersion = !version & 0x1;
 
     for(int i=0; i<app->tasks_count; i++){
+        version = (app->app_tasks)[i]->isActiveVersion;
+        (app->app_tasks)[i]->isActive[!version & 0x1] |= 0x1;
+        (app->app_tasks)[i]->isActiveVersion = !version & 0x1;
         active_task_array[active_task_count] = (app->app_tasks)[i];
         active_task_count++;
     }
@@ -2044,6 +2056,9 @@ void initialize(){
             }
         }
         for(int i=0; i<new_task_counter; i++){
+            version = new_tasks[i]->isActiveVersion;
+            new_tasks[i]->isActive[!version & 0x1] |= 0x1;
+            new_tasks[i]->isActiveVersion = !version & 0x1;
             active_task_array[active_task_count] = new_tasks[i];
             active_task_count++;
         }
@@ -2060,24 +2075,28 @@ void initialize(){
 
     for(int i=0; i<active_task_count; i++){
         if(active_task_array[i]->in_set_count == 0){
-            active_task_array[i]->deadline = app->x_min;
-            active_task_array[i]->isEnabled |= 0x1;
+            version = active_task_array[i]->deadlineVersion;
+            active_task_array[i]->deadline[!version & 0x1] = app->x_min;
+            active_task_array[i]->deadlineVersion = !version & 0x1;
+            version = active_task_array[i]->isEnabledVersion;
+            active_task_array[i]->isEnabled[!version & 0x1] |= 0x1;
+            active_task_array[i]->isEnabledVersion = !version & 0x1;
             enabled_task_array[enabled_task_count] = active_task_array[i];
             enabled_task_count++;
         }
     }
 
-    siren_command("PRINTF: %u\n", active_task_count);
 
 
-    set_threshold(max_energy_prediction + 0.0);
+    set_threshold(30);
     return;
 }
 
 void scheduler(){
     task_struct_t next_task_struct;
 
-    siren_command("START_TIME: sched\n");
+    siren_command("START_CCOUNT: sched\n");
+
     if(seen_resets != resets){
         seen_resets = resets;
         if(next_task == 1){
@@ -2085,10 +2104,13 @@ void scheduler(){
             g_task_1 = var_struct_task_1.version_array[(var_struct_task_1.window_begin_index + 0) % (var_struct_task_1.versions_count + 1)];
         }
     }
-    siren_command("GET_TIME: sched-%u\n", &delta_time);
-    siren_command("TEST_EXECUTION: %u, scheduler restore\n", delta_time);
+
+    siren_command("GET_CCOUNT: sched-%u\n", &delta_time);
+    siren_command("TEST_EXECUTION_CCOUNT: %u, scheduler restore\n", delta_time);
+
+    short int version;
     while(1){
-        siren_command("START_TIME: sched\n");
+        siren_command("START_CCOUNT: sched\n");
 
         heapsort(enabled_task_array, enabled_task_count);
         siren_command("PRINTF: selected task deadline %u\n", enabled_task_array[0]->deadline);
@@ -2099,16 +2121,125 @@ void scheduler(){
 
         siren_command("PRINTF: delta_time = %u\n", delta_time);
         siren_command("PRINTF: enabled_tasks %u\n", enabled_task_count);
-        for(int i=1; i<enabled_task_count; i++)
-            enabled_task_array[i]->deadline -= delta_time;
-        siren_command("GET_TIME: sched-%u\n", &delta_time);
-        siren_command("TEST_EXECUTION: %u, schedule\n", delta_time);
+        for(int i=1; i<enabled_task_count; i++){
+            version = enabled_task_array[i]->deadlineVersion;
+            enabled_task_array[i]->deadline[!version & 0x1] -= delta_time;
+            enabled_task_array[i]->deadlineVersion = !version & 0x1;
+        }
+        siren_command("GET_CCOUNT: sched-%u\n", &delta_time);
+        siren_command("TEST_EXECUTION_CCOUNT: %u, schedule\n", delta_time);
     }
 }
 
+void remove_last_app(){
+    return;
+}
+
+void prune_tasks(){
+    return;
+}
+
+void reset_threshold(){
+    return;
+}
+
+void increase_threshold(){
+    return;
+}
+
+void manage_underperf(){
+    char found = 0;
+    for(int i=0; i<active_app_count && !found; i++){
+        if(active_app_array[i]->x_ok[active_app_array[i]->x_okVersion] == -1){
+            found = 1;
+            if(i!=active_app_count){
+                remove_last_app();
+                prune_tasks();
+                reset_threshold();
+            } else {
+                increase_threshold();
+            }
+        }
+    }
+    return;
+}
+
+void activate_new_app(){
+    app_struct_t *app = app_array[active_app_count];
+    short int appVersion = app->isActiveVersion;
+    app->isActive[!appVersion & 0x1] |= 0x1;
+    int added_tasks = 0;
+    short int taskVersion;
+    for(int i=0; i<app->tasks_count; i++){
+        taskVersion = active_task_array[active_task_count]->isActiveVersion;
+        if(!((app->app_tasks)[i]->isActive[taskVersion])){
+            active_task_array[active_task_count]->isActive[!taskVersion & 0x1] |= 0x1;
+            active_task_array[active_task_count]->isActiveVersion = !taskVersion & 0x1;
+            active_task_array[active_task_count] = (app->app_tasks)[i];
+            active_task_count++;
+            added_tasks++;
+        }
+    }
+    app->isActiveVersion = !appVersion & 0x1;
+    active_app_array[active_app_count] = app;
+
+    if(added_tasks == 0) return;
+
+
+    task_struct_t* new_tasks[3];
+    int new_task_counter;
+    do {
+        new_task_counter = 0;
+        for(int i=0; i<active_task_count; i++){
+            task_struct_t *task = active_task_array[i];
+            for(int j=0; j<task->in_set_count; j++){
+                task_struct_t *in_task = task->in_set[j];
+                if(check_if_new(in_task)){
+                    new_tasks[new_task_counter] = in_task;
+                    new_task_counter++;
+                }
+            }
+        }
+        for(int i=0; i<new_task_counter; i++){
+            taskVersion = new_tasks[i]->isActiveVersion;
+            new_tasks[i]->isActive[!taskVersion & 0x1] |= 0x1;
+            new_tasks[i]->isActiveVersion = !taskVersion & 0x1;
+            active_task_array[active_task_count] = new_tasks[i];
+            active_task_count++;
+        }
+    } while(new_task_counter != 0);
+
+
+    for(int i=0; i<active_task_count; i++){
+        taskVersion = active_task_array[i]->deadlineVersion;
+        if(active_task_array[i]->in_set_count == 0){
+            active_task_array[i]->deadline[!taskVersion & 0x1] = app->x_min;
+            active_task_array[i]->deadlineVersion = !taskVersion & 0x1;
+            taskVersion = active_task_array[i]->isEnabledVersion;
+            active_task_array[i]->isEnabled[!taskVersion & 0x1] |= 0x1;
+            active_task_array[i]->isEnabledVersion = !taskVersion & 0x1;
+            enabled_task_array[enabled_task_count] = active_task_array[i];
+            enabled_task_count++;
+        }
+    }
+    return;
+}
+
+void manage_overperf(){
+    char found = 0;
+    short int version;
+    for(int i=0; i<active_app_count && !found; i++){
+        version = active_app_array[i]->x_okVersion;
+        if(active_app_array[i]->x_ok[version] == 1){
+            found = 1;
+            activate_new_app();
+        }
+    }
+    return;
+}
 
 int main(){
-    siren_command("START_TIME: main\n");
+    siren_command("START_CCOUNT: main\n");
     WDTCTL = WDTPW | WDTHOLD;
     siren_command("SET_VON: 30\n");
 
@@ -2118,8 +2249,12 @@ int main(){
     } else {
 
         siren_command("PRINTF: restarted after %l microseconds\n", tardis_time);
-        for(int i=0; i<enabled_task_count; i++)
-            enabled_task_array[i]->deadline -= tardis_time;
+        short int version;
+        for(int i=0; i<enabled_task_count; i++){
+            version = enabled_task_array[i]->deadlineVersion;
+            enabled_task_array[i]->deadline[!version & 0x1] -= tardis_time;
+            enabled_task_array[i]->deadlineVersion = !version & 0x1;
+        }
     }
 
 
@@ -2127,10 +2262,8 @@ int main(){
         siren_command("PRINTF: done, restarted %u\r\n", resets);
         return 0;
     }
-    siren_command("GET_TIME: main-%u\n", &delta_time);
-    siren_command("PRINTF: %u\n", delta_time);
-    siren_command("TEST_EXECUTION: %u, main\n", delta_time);
-
+    siren_command("GET_CCOUNT: main-%u\n", &delta_time);
+    siren_command("TEST_EXECUTION_CCOUNT: %u, main\n", delta_time);
 
     scheduler();
     return 0;
