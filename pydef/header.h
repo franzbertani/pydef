@@ -84,8 +84,8 @@ typedef struct app_struct {
 	    var_struct_task_1.window_begin_index = (var_struct_task_1.window_begin_index + 1) % (var_struct_task_1.versions_count + 1);	\
 	}	\
 		\
-	siren_command("GET_CCOUNT: task-%u\n", &delta_time);	\
-	siren_command("TEST_EXECUTION_CCOUNT: %u\n", delta_time);	\
+	siren_command("GET_CCOUNT: task-%u\n", &delta_cycles);	\
+	siren_command("TEST_EXECUTION_CCOUNT: %u\n", delta_cycles);	\
 		\
 	/* siren_command("PRINTF: var_struct_task_1 :\r\n"); */	\
 	/* for(int i=0; i<var_struct_task_1.versions_count; i++) */	\
@@ -121,13 +121,13 @@ typedef struct app_struct {
 	    var_struct_task_2.window_begin_index = (var_struct_task_2.window_begin_index + 1) % (var_struct_task_2.versions_count + 1);	\
 	}	\
 		\
-	siren_command("GET_CCOUNT: task-%u\n", &delta_time);	\
-	siren_command("TEST_EXECUTION_CCOUNT: %u\n", delta_time);	\
+	siren_command("GET_CCOUNT: task-%u\n", &delta_cycles);	\
+	siren_command("TEST_EXECUTION_CCOUNT: %u\n", delta_cycles);	\
 		\
 	/* siren_command("PRINTF: var_struct_task_2 :\r\n"); */	\
 	/* for(int i=0; i<var_struct_task_2.versions_count; i++) */	\
 	/*     siren_command("PRINTF: %u\r\n", var_struct_task_2.version_array[(var_struct_task_2.window_begin_index + i) % (var_struct_task_2.versions_count + 1)]); */	\
-	unsigned long int value = 1000000 - task_struct_task_2.deadline[task_struct_task_2.deadlineVersion] - delta_time;	\
+	unsigned long int value = 1000000 - task_struct_task_2.deadline[task_struct_task_2.deadlineVersion] - delta_cycles;	\
 	siren_command("PRINTF: updating tput aftrer task_2\n");	\
 	if (value < 0){	\
 	    siren_command("PRINTF: underperforming\n");	\
@@ -155,13 +155,13 @@ typedef struct app_struct {
 	    var_struct_task_3.window_begin_index = (var_struct_task_3.window_begin_index + 1) % (var_struct_task_3.versions_count + 1);	\
 	}	\
 		\
-	siren_command("GET_CCOUNT: task-%u\n", &delta_time);	\
-	siren_command("TEST_EXECUTION_CCOUNT: %u\n", delta_time);	\
+	siren_command("GET_CCOUNT: task-%u\n", &delta_cycles);	\
+	siren_command("TEST_EXECUTION_CCOUNT: %u\n", delta_cycles);	\
 		\
 	/* siren_command("PRINTF: var_struct_task_3 :\r\n"); */	\
 	/* for(int i=0; i<var_struct_task_3.versions_count; i++) */	\
 	/*     siren_command("PRINTF: %u\r\n", var_struct_task_3.version_array[(var_struct_task_3.window_begin_index + i) % (var_struct_task_3.versions_count + 1)]); */	\
-	unsigned long int value = 333333 - task_struct_task_3.deadline[task_struct_task_3.deadlineVersion] - delta_time;	\
+	unsigned long int value = 333333 - task_struct_task_3.deadline[task_struct_task_3.deadlineVersion] - delta_cycles;	\
 	siren_command("PRINTF: updating tput aftrer task_3\n");	\
 	if (value < 0){	\
 	    siren_command("PRINTF: underperforming\n");	\

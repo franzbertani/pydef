@@ -17,7 +17,8 @@ int __attribute__ ((persistent)) resets = -1;
 int __attribute__ ((persistent)) seen_resets = 0;
 int __attribute__ ((persistent)) next_task = 0;
 int __attribute__ ((persistent)) tardis_time = 0;
-int __attribute__ ((persistent)) delta_time = 0;
+int __attribute__ ((persistent)) delta_cycles = 0;
+unsigned long int __attribute__ ((persistent)) frequency = 0;
 
 BEGIN_TASK_task_1
     siren_command("PRINTF: running task 1\n");
@@ -69,7 +70,7 @@ void heapify(task_struct_t* a[],int n) {
         item = a[k];
         i = k;
         j = (i-1)/2;
-        while((i>0)&&(item->deadline > a[j]->deadline)) {
+        while((i>0)&&(item->deadline[item->deadlineVersion] > a[j]->deadline[a[j]->deadlineVersion])) {
             a[i] = a[j];
             i = j;
             j = (i-1)/2;
@@ -86,9 +87,9 @@ void adjust(task_struct_t* a[],int n) {
     i = 2*j+1;
     while(i<=n-1) {
         if(i+1 <= n-1)
-           if(a[i]->deadline < a[i+1]->deadline)
+           if(a[i]->deadline[a[i]->deadlineVersion] < a[i+1]->deadline[a[i+1]->deadlineVersion])
             i++;
-        if(item->deadline < a[i]->deadline) {
+        if(item->deadline[item->deadlineVersion] < a[i]->deadline[a[i]->deadlineVersion]) {
             a[j] = a[i];
             j = i;
             i = 2*j+1;
@@ -122,6 +123,7 @@ void initialize(){
     app->isActive[!version & 0x1] |= 0x1;
     active_app_array[active_app_count] = app;
     app->isActiveVersion = !version & 0x1;
+    active_app_count++;
 
     for(int i=0; i<app->tasks_count; i++){
         version = (app->app_tasks)[i]->isActiveVersion;
@@ -196,29 +198,29 @@ void scheduler(){
         }
     }
 
-    siren_command("GET_CCOUNT: sched-%u\n", &delta_time);
-    siren_command("TEST_EXECUTION_CCOUNT: %u, scheduler restore\n", delta_time);
+    siren_command("GET_CCOUNT: sched-%u\n", &delta_cycles);
+    siren_command("TEST_EXECUTION_CCOUNT: %u, scheduler restore\n", delta_cycles);
 
     short int version;
     while(1){
         siren_command("START_CCOUNT: sched\n");
         //sort array of enabled tasks based on deadlines
         heapsort(enabled_task_array, enabled_task_count);
-        siren_command("PRINTF: selected task deadline %u\n", enabled_task_array[0]->deadline);
+        siren_command("PRINTF: selected task deadline %u\n", enabled_task_array[0]->deadline[enabled_task_array[0]->deadlineVersion]);
         //select and exec task with lowest deadline
         next_task_struct = *(enabled_task_array[0]);
         (next_task_struct.function_pointer)();
 
         //subtract to all deadlines of other tasks exec time (not to the first which we just run)
-        siren_command("PRINTF: delta_time = %u\n", delta_time);
+        siren_command("PRINTF: delta_cycles = %u\n", delta_cycles);
         siren_command("PRINTF: enabled_tasks %u\n", enabled_task_count);
         for(int i=1; i<enabled_task_count; i++){
             version = enabled_task_array[i]->deadlineVersion;
-            enabled_task_array[i]->deadline[!version & 0x1] -= delta_time;
+            enabled_task_array[i]->deadline[!version & 0x1] = enabled_task_array[i]->deadline[version] - delta_cycles; //freq @ 1Mhz and deadline in microsec => cycles = microsec
             enabled_task_array[i]->deadlineVersion = !version & 0x1;
         }
-        siren_command("GET_CCOUNT: sched-%u\n", &delta_time);
-        siren_command("TEST_EXECUTION_CCOUNT: %u, schedule\n", delta_time);
+        siren_command("GET_CCOUNT: sched-%u\n", &delta_cycles);
+        siren_command("TEST_EXECUTION_CCOUNT: %u, schedule\n", delta_cycles);
     }
 }
 
@@ -331,6 +333,8 @@ void manage_overperf(){
 
 int main(){
     siren_command("START_CCOUNT: main\n");
+    siren_command("GET_FREQ: %u\n", &frequency);
+    siren_command("PRINTF: running @ %l Hz\n", frequency);
     WDTCTL = WDTPW | WDTHOLD;
     siren_command("SET_VON: 30\n");
 
@@ -353,8 +357,8 @@ int main(){
         siren_command("PRINTF: done, restarted %u\r\n", resets);
         return 0;
     }
-    siren_command("GET_CCOUNT: main-%u\n", &delta_time);
-    siren_command("TEST_EXECUTION_CCOUNT: %u, main\n", delta_time);
+    siren_command("GET_CCOUNT: main-%u\n", &delta_cycles);
+    siren_command("TEST_EXECUTION_CCOUNT: %u, main\n", delta_cycles);
 
     scheduler();
     return 0;

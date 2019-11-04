@@ -174,32 +174,16 @@ class Tasks:
         """
         header.add_define(("END_TASK", "}\n"))
 
-    def add_deadline_restore(self, task_id, subtract_exec_time=True, exec_time_var_name="delta_time"):
+    def add_deadline_restore(self, task_id, subtract_exec_time=True, exec_time_var_name="delta_cycles"):
 
         app_list_iter = iter(sorted(
             self.tasks_dict[task_id].apps, key=lambda x: self.apps_dict[x].x_min, reverse=False))
         app_id = next(app_list_iter)
 
-        """ DELTA TIME SUBTRATION DONE BY THE SCHEDULER
-        if subtract_exec_time:
-            deadline_string = "if(app_struct_%s.isActive) task_struct_%s.deadline = (%s - %s);" % (
-            app_id, task_id, self.apps_dict[app_id].x_min, exec_time_var_name)
-        else: deadline_string = "if(app_struct_%s.isActive) task_struct_%s.deadline = %s;" % (
-            app_id, task_id, self.apps_dict[app_id].x_min)
-        """
-
         deadline_string = "if(app_struct_%s.isActive[app_struct_%s.isActiveVersion]) { task_struct_%s.deadline[!task_struct_%s.deadlineVersion & 0x1] = %s; task_struct_%s.deadlineVersion = !task_struct_%s.deadlineVersion & 0x1;}" % (
             app_id, app_id, task_id, task_id, self.apps_dict[app_id].x_min, task_id, task_id)
 
         for app_id in app_list_iter:
-            """ SAME AS BEFORE
-            if subtract_exec_time:
-                deadline_string += "else if(app_struct_%s.isActive) task_struct_%s.deadline = %s - %s;" % (
-                app_id, task_id, self.apps_dict[app_id].x_min, exec_time_var_name)
-            else:
-                deadline_string += "else if(app_struct_%s.isActive) task_struct_%s.deadline = %s;" % (
-                app_id, task_id, self.apps_dict[app_id].x_min)
-            """
             deadline_string += "else if(app_struct_%s.isActive[app_struct_%s.isActiveVersion]) { task_struct_%s.deadline[!task_struct_%s.deadlineVersion & 0x1] = %s; task_struct_%s.deadlineVersion = !task_struct_%s.deadlineVersion & 0x1;}" % (
                 app_id, app_id, task_id, task_id, self.apps_dict[app_id].x_min, task_id, task_id)
 

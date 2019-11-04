@@ -1,4 +1,4 @@
-unsigned long int value = ORIGINAL_DEADLINE - task_struct_TASK_ID.deadline[task_struct_TASK_ID.deadlineVersion] - delta_time;
+unsigned long int value = ORIGINAL_DEADLINE - task_struct_TASK_ID.deadline[task_struct_TASK_ID.deadlineVersion] - delta_cycles;
 siren_command("PRINTF: updating tput aftrer TASK_ID\n");
 if (value < 0){
     siren_command("PRINTF: underperforming\n");

@@ -1680,7 +1680,7 @@ extern task_struct_t task_struct_task_3;
 extern app_struct_t app_struct_app_1;
 extern app_struct_t app_struct_app_2;
 
-int __attribute__ ((persistent)) delta_time = 0;
+int __attribute__ ((persistent)) delta_cycles = 0;
 float __attribute__ ((persistent)) tputs[2] = { 0, 0 };
 
 void
@@ -1699,8 +1699,8 @@ task_1()
     var_struct_task_1.is_full = 1;
     var_struct_task_1.window_begin_index = (var_struct_task_1.window_begin_index + 1) % (var_struct_task_1.versions_count + 1);
   }
-  siren_command("GET_TIME: task- %u\n", &delta_time);
-  siren_command("TEST_EXECUTION: %u\n", delta_time);
+  siren_command("GET_TIME: task- %u\n", &delta_cycles);
+  siren_command("TEST_EXECUTION: %u\n", delta_cycles);
   extern task_struct_t task_struct_task_2;
   if(!(task_struct_task_2.isEnabled) && (app_struct_app_1.isActive)) {
     task_struct_task_2.isEnabled |= 0x1;
@@ -1743,9 +1743,9 @@ task_2()
     var_struct_task_2.is_full = 1;
     var_struct_task_2.window_begin_index = (var_struct_task_2.window_begin_index + 1) % (var_struct_task_2.versions_count + 1);
   }
-  siren_command("GET_TIME: task- %u\n", &delta_time);
-  siren_command("TEST_EXECUTION: %u\n", delta_time);
-  unsigned long int value = 1000000 - task_struct_task_2.deadline - delta_time;
+  siren_command("GET_TIME: task- %u\n", &delta_cycles);
+  siren_command("TEST_EXECUTION: %u\n", delta_cycles);
+  unsigned long int value = 1000000 - task_struct_task_2.deadline - delta_cycles;
   siren_command("PRINTF: updating tput aftrer task_2\n");
   if(value < 0) {
     siren_command("PRINTF: underperforming\n");
@@ -1778,9 +1778,9 @@ task_3()
     var_struct_task_3.is_full = 1;
     var_struct_task_3.window_begin_index = (var_struct_task_3.window_begin_index + 1) % (var_struct_task_3.versions_count + 1);
   }
-  siren_command("GET_TIME: task- %u\n", &delta_time);
-  siren_command("TEST_EXECUTION: %u\n", delta_time);
-  unsigned long int value = 333333 - task_struct_task_3.deadline - delta_time;
+  siren_command("GET_TIME: task- %u\n", &delta_cycles);
+  siren_command("TEST_EXECUTION: %u\n", delta_cycles);
+  unsigned long int value = 333333 - task_struct_task_3.deadline - delta_cycles;
   siren_command("PRINTF: updating tput aftrer task_3\n");
   if(value < 0) {
     siren_command("PRINTF: underperforming\n");
