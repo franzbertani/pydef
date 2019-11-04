@@ -17,7 +17,7 @@ int __attribute__ ((persistent)) resets = -1;
 int __attribute__ ((persistent)) seen_resets = 0;
 int __attribute__ ((persistent)) next_task = 0;
 int __attribute__ ((persistent)) tardis_time = 0;
-int __attribute__ ((persistent)) delta_cycles = 0;
+long int __attribute__ ((persistent)) delta_cycles = 0;
 unsigned long int __attribute__ ((persistent)) frequency = 0;
 void activate_new_app();
 void manage_underperf();
@@ -26,14 +26,16 @@ void manage_overperf();
 BEGIN_TASK_task_1
     siren_command("PRINTF: running task 1\n");
     int t1_out;
-    t1_out = get_sample();
+    /* t1_out = get_sample(); */
+    __delay_cycles(40000);
     RETURN_task_1
 END_TASK
 
 BEGIN_TASK_task_2
     siren_command("PRINTF: running task 2\n");
     int t2_output;
-    t2_output = task_1 + 10;
+    /* t2_output = task_1 + 10; */
+    __delay_cycles(25000);
     siren_command("LOG_EVENT: end app1\n");
     RETURN_task_2
 END_TASK
@@ -41,7 +43,8 @@ END_TASK
 BEGIN_TASK_task_3
     siren_command("PRINTF: running task 3\n");
     int t3_output;
-    t3_output = task_1 * 10;
+    /* t3_output = task_1 * 10; */
+    __delay_cycles(15000);
     siren_command("LOG_EVENT: end app2\n");
     RETURN_task_3
 END_TASK
@@ -59,8 +62,8 @@ int check_if_new(task_struct_t *task){
     return 1;
 }
 
-void set_threshold(int threshold){
-    siren_command("SET_VON: %u\n",threshold);
+void set_threshold(int energy){
+    siren_command("SET_VON: %u\n",energy);
     return;
 }
 
@@ -182,9 +185,9 @@ void initialize(){
         }
     }
 
-    /* currently just a stub L:23*/
-    /* set_threshold(max_energy_prediction + AVG_OVERHEAD); */
-    set_threshold(30);
+    /* L:23 */
+    /* set_threshold(30); */
+    set_threshold(max_energy_prediction + AVG_OVERHEAD);
     return;
 }
 
@@ -201,30 +204,32 @@ void scheduler(){
         }
     }
 
-    siren_command("GET_CCOUNT: sched-%u\n", &delta_cycles);
-    siren_command("TEST_EXECUTION_CCOUNT: %u, scheduler restore\n", delta_cycles);
+    siren_command("GET_CCOUNT: sched-%l\n", &delta_cycles);
+    siren_command("TEST_EXECUTION_CCOUNT: %l, scheduler restore\n", delta_cycles);
 
     short int version;
     while(1){
         siren_command("START_CCOUNT: sched\n");
         //sort array of enabled tasks based on deadlines
         heapsort(enabled_task_array, enabled_task_count);
-        siren_command("PRINTF: selected task deadline %u\n", enabled_task_array[0]->deadline[enabled_task_array[0]->deadlineVersion]);
+        siren_command("PRINTF: selected task deadline %l\n", enabled_task_array[0]->deadline[enabled_task_array[0]->deadlineVersion]);
         //select and exec task with lowest deadline
         next_task_struct = *(enabled_task_array[0]);
         (next_task_struct.function_pointer)();
 
         //subtract to all deadlines of other tasks exec time (not to the first which we just run)
-        siren_command("PRINTF: delta_cycles = %u\n", delta_cycles);
+        siren_command("PRINTF: delta_cycles = %l\n", delta_cycles);
         siren_command("PRINTF: enabled_tasks %u\n", enabled_task_count);
         for(int i=1; i<enabled_task_count; i++){
             version = enabled_task_array[i]->deadlineVersion;
             enabled_task_array[i]->deadline[!version & 0x1] = enabled_task_array[i]->deadline[version] - delta_cycles; //freq @ 1Mhz and deadline in microsec => cycles = microsec
             enabled_task_array[i]->deadlineVersion = !version & 0x1;
         }
-        siren_command("GET_CCOUNT: sched-%u\n", &delta_cycles);
-        siren_command("TEST_EXECUTION_CCOUNT: %u, schedule\n", delta_cycles);
+        siren_command("GET_CCOUNT: sched-%l\n", &delta_cycles);
+        siren_command("TEST_EXECUTION_CCOUNT: %l, schedule\n", delta_cycles);
         manage_overperf();
+
+        siren_command("PRINTF: deadlines [%l,%l] [%l,%l] [%l,%l]\n", task_array[0]->deadline[0], task_array[0]->deadline[1], task_array[1]->deadline[0], task_array[1]->deadline[1], task_array[2]->deadline[0],  task_array[2]->deadline[1]);
     }
 }
 
@@ -340,7 +345,6 @@ int main(){
     siren_command("GET_FREQ: %u\n", &frequency);
     siren_command("PRINTF: running @ %l Hz\n", frequency);
     WDTCTL = WDTPW | WDTHOLD;
-    siren_command("SET_VON: 30\n");
 
     resets++;
     if(resets==0){
@@ -361,8 +365,8 @@ int main(){
         siren_command("PRINTF: done, restarted %u\r\n", resets);
         return 0;
     }
-    siren_command("GET_CCOUNT: main-%u\n", &delta_cycles);
-    siren_command("TEST_EXECUTION_CCOUNT: %u, main\n", delta_cycles);
+    siren_command("GET_CCOUNT: main-%l\n", &delta_cycles);
+    siren_command("TEST_EXECUTION_CCOUNT: %l, main\n", delta_cycles);
 
     scheduler();
     return 0;

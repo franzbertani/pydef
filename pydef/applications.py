@@ -152,7 +152,7 @@ class Applications:
             template = aad.read().replace("\n", "\t\\\n\t")
         template = template.replace("APP_COUNT", str(len(self.apps_dict)))
         sorted_apps = [x[0] for x in sorted(
-            self.apps_dict.items(), key=lambda x: x[1].x_min, reverse=True)]
+            self.apps_dict.items(), key=lambda x: x[1].x_min, reverse=False)]
         apps = ["&app_struct_%s" % (x,) for x in sorted_apps]
         apps_string = ", ".join(apps)
         template = template.replace("APP_STRUCTS", apps_string)

@@ -84,8 +84,8 @@ typedef struct app_struct {
 	    var_struct_task_1.window_begin_index = (var_struct_task_1.window_begin_index + 1) % (var_struct_task_1.versions_count + 1);	\
 	}	\
 		\
-	siren_command("GET_CCOUNT: task-%u\n", &delta_cycles);	\
-	siren_command("TEST_EXECUTION_CCOUNT: %u\n", delta_cycles);	\
+	siren_command("GET_CCOUNT: task-%l\n", &delta_cycles);	\
+	siren_command("TEST_EXECUTION_CCOUNT: %l\n", delta_cycles);	\
 		\
 	/* siren_command("PRINTF: var_struct_task_1 :\r\n"); */	\
 	/* for(int i=0; i<var_struct_task_1.versions_count; i++) */	\
@@ -97,7 +97,7 @@ typedef struct app_struct {
 	    enabled_task_array[enabled_task_count] = &task_struct_task_2;	\
 	    enabled_task_count++;	\
 	    task_struct_task_2.isEnabledVersion = !task_struct_task_2_enVersion & 0x1;	\
-	    if(app_struct_app_1.isActive[app_struct_app_1.isActiveVersion]) { task_struct_task_2.deadline[!task_struct_task_2.deadlineVersion & 0x1] = 1000000; task_struct_task_2.deadlineVersion = !task_struct_task_2.deadlineVersion & 0x1;}	\
+	    if(app_struct_app_1.isActive[app_struct_app_1.isActiveVersion]) { task_struct_task_2.deadline[!task_struct_task_2.deadlineVersion & 0x1] = 500000; task_struct_task_2.deadlineVersion = !task_struct_task_2.deadlineVersion & 0x1;}	\
 	}	\
 	extern task_struct_t task_struct_task_3;	\
 	short int task_struct_task_3_enVersion = task_struct_task_3.isEnabledVersion;	\
@@ -106,9 +106,9 @@ typedef struct app_struct {
 	    enabled_task_array[enabled_task_count] = &task_struct_task_3;	\
 	    enabled_task_count++;	\
 	    task_struct_task_3.isEnabledVersion = !task_struct_task_3_enVersion & 0x1;	\
-	    if(app_struct_app_2.isActive[app_struct_app_2.isActiveVersion]) { task_struct_task_3.deadline[!task_struct_task_3.deadlineVersion & 0x1] = 333333; task_struct_task_3.deadlineVersion = !task_struct_task_3.deadlineVersion & 0x1;}	\
+	    if(app_struct_app_2.isActive[app_struct_app_2.isActiveVersion]) { task_struct_task_3.deadline[!task_struct_task_3.deadlineVersion & 0x1] = 555555; task_struct_task_3.deadlineVersion = !task_struct_task_3.deadlineVersion & 0x1;}	\
 	}	\
-	if(app_struct_app_2.isActive[app_struct_app_2.isActiveVersion]) { task_struct_task_1.deadline[!task_struct_task_1.deadlineVersion & 0x1] = 333333; task_struct_task_1.deadlineVersion = !task_struct_task_1.deadlineVersion & 0x1;}else if(app_struct_app_1.isActive[app_struct_app_1.isActiveVersion]) { task_struct_task_1.deadline[!task_struct_task_1.deadlineVersion & 0x1] = 1000000; task_struct_task_1.deadlineVersion = !task_struct_task_1.deadlineVersion & 0x1;}
+	if(app_struct_app_1.isActive[app_struct_app_1.isActiveVersion]) { task_struct_task_1.deadline[!task_struct_task_1.deadlineVersion & 0x1] = 500000; task_struct_task_1.deadlineVersion = !task_struct_task_1.deadlineVersion & 0x1;}else if(app_struct_app_2.isActive[app_struct_app_2.isActiveVersion]) { task_struct_task_1.deadline[!task_struct_task_1.deadlineVersion & 0x1] = 555555; task_struct_task_1.deadlineVersion = !task_struct_task_1.deadlineVersion & 0x1;}
 #define RETURN_task_2 g_task_2 = t2_output;	\
 	var_struct_task_2.version_array[var_struct_task_2.write_index] = g_task_2;	\
 		\
@@ -121,13 +121,13 @@ typedef struct app_struct {
 	    var_struct_task_2.window_begin_index = (var_struct_task_2.window_begin_index + 1) % (var_struct_task_2.versions_count + 1);	\
 	}	\
 		\
-	siren_command("GET_CCOUNT: task-%u\n", &delta_cycles);	\
-	siren_command("TEST_EXECUTION_CCOUNT: %u\n", delta_cycles);	\
+	siren_command("GET_CCOUNT: task-%l\n", &delta_cycles);	\
+	siren_command("TEST_EXECUTION_CCOUNT: %l\n", delta_cycles);	\
 		\
 	/* siren_command("PRINTF: var_struct_task_2 :\r\n"); */	\
 	/* for(int i=0; i<var_struct_task_2.versions_count; i++) */	\
 	/*     siren_command("PRINTF: %u\r\n", var_struct_task_2.version_array[(var_struct_task_2.window_begin_index + i) % (var_struct_task_2.versions_count + 1)]); */	\
-	unsigned long int value = 1000000 - task_struct_task_2.deadline[task_struct_task_2.deadlineVersion] - delta_cycles;	\
+	unsigned long int value = 500000 - task_struct_task_2.deadline[task_struct_task_2.deadlineVersion] - delta_cycles;	\
 	siren_command("PRINTF: updating tput aftrer task_2\n");	\
 	if (value < 0){	\
 	    siren_command("PRINTF: underperforming\n");	\
@@ -142,7 +142,7 @@ typedef struct app_struct {
 	    app_struct_app_1.x_ok[!app_struct_app_1.x_okVersion & 0x1] = 0;	\
 	    app_struct_app_1.x_okVersion = !app_struct_app_1.x_okVersion & 0x1;	\
 	}	\
-	if(app_struct_app_1.isActive[app_struct_app_1.isActiveVersion]) { task_struct_task_2.deadline[!task_struct_task_2.deadlineVersion & 0x1] = 1000000; task_struct_task_2.deadlineVersion = !task_struct_task_2.deadlineVersion & 0x1;}
+	if(app_struct_app_1.isActive[app_struct_app_1.isActiveVersion]) { task_struct_task_2.deadline[!task_struct_task_2.deadlineVersion & 0x1] = 500000; task_struct_task_2.deadlineVersion = !task_struct_task_2.deadlineVersion & 0x1;}
 #define RETURN_task_3 g_task_3 = t3_output;	\
 	var_struct_task_3.version_array[var_struct_task_3.write_index] = g_task_3;	\
 		\
@@ -155,13 +155,13 @@ typedef struct app_struct {
 	    var_struct_task_3.window_begin_index = (var_struct_task_3.window_begin_index + 1) % (var_struct_task_3.versions_count + 1);	\
 	}	\
 		\
-	siren_command("GET_CCOUNT: task-%u\n", &delta_cycles);	\
-	siren_command("TEST_EXECUTION_CCOUNT: %u\n", delta_cycles);	\
+	siren_command("GET_CCOUNT: task-%l\n", &delta_cycles);	\
+	siren_command("TEST_EXECUTION_CCOUNT: %l\n", delta_cycles);	\
 		\
 	/* siren_command("PRINTF: var_struct_task_3 :\r\n"); */	\
 	/* for(int i=0; i<var_struct_task_3.versions_count; i++) */	\
 	/*     siren_command("PRINTF: %u\r\n", var_struct_task_3.version_array[(var_struct_task_3.window_begin_index + i) % (var_struct_task_3.versions_count + 1)]); */	\
-	unsigned long int value = 333333 - task_struct_task_3.deadline[task_struct_task_3.deadlineVersion] - delta_cycles;	\
+	unsigned long int value = 555555 - task_struct_task_3.deadline[task_struct_task_3.deadlineVersion] - delta_cycles;	\
 	siren_command("PRINTF: updating tput aftrer task_3\n");	\
 	if (value < 0){	\
 	    siren_command("PRINTF: underperforming\n");	\
@@ -176,12 +176,12 @@ typedef struct app_struct {
 	    app_struct_app_2.x_ok[!app_struct_app_2.x_okVersion & 0x1] = 0;	\
 	    app_struct_app_2.x_okVersion = !app_struct_app_2.x_okVersion & 0x1;	\
 	}	\
-	if(app_struct_app_2.isActive[app_struct_app_2.isActiveVersion]) { task_struct_task_3.deadline[!task_struct_task_3.deadlineVersion & 0x1] = 333333; task_struct_task_3.deadlineVersion = !task_struct_task_3.deadlineVersion & 0x1;}
+	if(app_struct_app_2.isActive[app_struct_app_2.isActiveVersion]) { task_struct_task_3.deadline[!task_struct_task_3.deadlineVersion & 0x1] = 555555; task_struct_task_3.deadlineVersion = !task_struct_task_3.deadlineVersion & 0x1;}
 #define END_TASK }
 
-#define TASKS_STRUCTS task_struct_t __attribute__ ((persistent)) task_struct_task_1 = {.e_wc = 450, .in_set = {}, .in_set_count = 0, .function_pointer = &task_1, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0};	\
-	task_struct_t __attribute__ ((persistent)) task_struct_task_3 = {.e_wc = 250, .in_set = {&task_struct_task_1}, .in_set_count = 1, .function_pointer = &task_3, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0};	\
-	task_struct_t __attribute__ ((persistent)) task_struct_task_2 = {.e_wc = 150, .in_set = {&task_struct_task_1}, .in_set_count = 1, .function_pointer = &task_2, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0};
+#define TASKS_STRUCTS task_struct_t __attribute__ ((persistent)) task_struct_task_1 = {.e_wc = 80, .in_set = {}, .in_set_count = 0, .function_pointer = &task_1, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0};	\
+	task_struct_t __attribute__ ((persistent)) task_struct_task_3 = {.e_wc = 15, .in_set = {&task_struct_task_1}, .in_set_count = 1, .function_pointer = &task_3, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0};	\
+	task_struct_t __attribute__ ((persistent)) task_struct_task_2 = {.e_wc = 25, .in_set = {&task_struct_task_1}, .in_set_count = 1, .function_pointer = &task_2, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0};
 #define TASK_ARRAY task_struct_t* __attribute__ ((persistent)) task_array[3] = {&task_struct_task_1, &task_struct_task_2, &task_struct_task_3};	\
 	task_struct_t* __attribute__ ((persistent)) active_task_array[3] = {};	\
 	int __attribute__ ((persistent)) active_task_count = 0;	\
@@ -190,14 +190,14 @@ typedef struct app_struct {
 	
 #define TASK_COUNT 3
 #define APPS_COUNT 2
-#define APP_STRUCTS app_struct_t __attribute__ ((persistent)) app_struct_app_1 = {.x_min = 1000000, .x_ok = {0,0}, .x_okVersion = 0x0, .tasks_count = 2, .app_tasks = {&task_struct_task_1, &task_struct_task_2}, .initial_task = &task_struct_task_1, .final_task = &task_struct_task_2, .isActive = {0x0, 0x0}, .isActiveVersion = 0x0};	\
-	app_struct_t __attribute__ ((persistent)) app_struct_app_2 = {.x_min = 333333, .x_ok = {0,0}, .x_okVersion = 0x0, .tasks_count = 2, .app_tasks = {&task_struct_task_1, &task_struct_task_3}, .initial_task = &task_struct_task_1, .final_task = &task_struct_task_3, .isActive = {0x0, 0x0}, .isActiveVersion = 0x0};
+#define APP_STRUCTS app_struct_t __attribute__ ((persistent)) app_struct_app_1 = {.x_min = 500000, .x_ok = {0,0}, .x_okVersion = 0x0, .tasks_count = 2, .app_tasks = {&task_struct_task_1, &task_struct_task_2}, .initial_task = &task_struct_task_1, .final_task = &task_struct_task_2, .isActive = {0x0, 0x0}, .isActiveVersion = 0x0};	\
+	app_struct_t __attribute__ ((persistent)) app_struct_app_2 = {.x_min = 555555, .x_ok = {0,0}, .x_okVersion = 0x0, .tasks_count = 2, .app_tasks = {&task_struct_task_1, &task_struct_task_3}, .initial_task = &task_struct_task_1, .final_task = &task_struct_task_3, .isActive = {0x0, 0x0}, .isActiveVersion = 0x0};
 #define APP_ARRAY app_struct_t* __attribute__ ((persistent)) app_array[2] = {&app_struct_app_1, &app_struct_app_2};	\
 	app_struct_t* __attribute__ ((persistent)) active_app_array[2] = {};	\
 	int __attribute__ ((persistent)) active_app_count = 0;	\
 	
 #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
-#define AVG_OVERHEAD 18
+#define AVG_OVERHEAD 0
 #define RESTORE_OVERHEAD 1.0
 #define RESTORE(global_var, struct_address, version) global_var = struct_address.version_array[(struct_address.window_begin_index + version) % (struct_address.versions_count + 1)]
 
