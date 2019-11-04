@@ -19,6 +19,9 @@ int __attribute__ ((persistent)) next_task = 0;
 int __attribute__ ((persistent)) tardis_time = 0;
 int __attribute__ ((persistent)) delta_cycles = 0;
 unsigned long int __attribute__ ((persistent)) frequency = 0;
+void activate_new_app();
+void manage_underperf();
+void manage_overperf();
 
 BEGIN_TASK_task_1
     siren_command("PRINTF: running task 1\n");
@@ -221,6 +224,7 @@ void scheduler(){
         }
         siren_command("GET_CCOUNT: sched-%u\n", &delta_cycles);
         siren_command("TEST_EXECUTION_CCOUNT: %u, schedule\n", delta_cycles);
+        manage_overperf();
     }
 }
 
@@ -261,13 +265,14 @@ void activate_new_app(){
     app_struct_t *app = app_array[active_app_count]; //activate first not active app
     short int appVersion = app->isActiveVersion;
     app->isActive[!appVersion & 0x1] |= 0x1;
+
     int added_tasks = 0;
     short int taskVersion;
     for(int i=0; i<app->tasks_count; i++){
-        taskVersion = active_task_array[active_task_count]->isActiveVersion;
+        taskVersion = (app->app_tasks)[i]->isActiveVersion;
         if(!((app->app_tasks)[i]->isActive[taskVersion])){
-            active_task_array[active_task_count]->isActive[!taskVersion & 0x1] |= 0x1;
-            active_task_array[active_task_count]->isActiveVersion = !taskVersion & 0x1;
+            (app->app_tasks)[i]->isActive[!taskVersion & 0x1] |= 0x1;
+            (app->app_tasks)[i]->isActiveVersion = !taskVersion & 0x1;
             active_task_array[active_task_count] = (app->app_tasks)[i];
             active_task_count++;
             added_tasks++;
@@ -278,7 +283,7 @@ void activate_new_app(){
 
     if(added_tasks == 0) return;
 
-    /* completing tasks set with extra app dependencies */
+    /* filling tasks set with extra app dependencies */
     task_struct_t* new_tasks[TASK_COUNT];
     int new_task_counter;
     do {
@@ -294,7 +299,6 @@ void activate_new_app(){
             }
         }
         for(int i=0; i<new_task_counter; i++){ // pouring new tasks into active task
-            taskVersion = new_tasks[i]->isActiveVersion;
             new_tasks[i]->isActive[!taskVersion & 0x1] |= 0x1;
             new_tasks[i]->isActiveVersion = !taskVersion & 0x1;
             active_task_array[active_task_count] = new_tasks[i];
@@ -305,7 +309,7 @@ void activate_new_app(){
     //set the deadlines
     for(int i=0; i<active_task_count; i++){
         taskVersion = active_task_array[i]->deadlineVersion;
-        if(active_task_array[i]->in_set_count == 0){
+        if(active_task_array[i]->in_set_count == 0 && !(active_task_array[i]->isActive[active_task_array[i]->isActiveVersion])){
             active_task_array[i]->deadline[!taskVersion & 0x1] = app->x_min;
             active_task_array[i]->deadlineVersion = !taskVersion & 0x1;
             taskVersion = active_task_array[i]->isEnabledVersion;
@@ -319,7 +323,7 @@ void activate_new_app(){
 }
 
 void manage_overperf(){
-    char found = 0;
+    short int found = 0;
     short int version;
     for(int i=0; i<active_app_count && !found; i++){
         version = active_app_array[i]->x_okVersion;
