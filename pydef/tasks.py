@@ -103,7 +103,6 @@ class Tasks:
                 self.tasks_dict[new_task.id] = new_task
             else:
                 print("WARN: skipped task %s" % (new_task.id))
-        print(self.tasks_dict)
 
     def build_tasks_graph(self):
         """Builds a networkx graph from the task dictionary
@@ -174,18 +173,85 @@ class Tasks:
         """
         header.add_define(("END_TASK", "}\n"))
 
-    def add_deadline_restore(self, task_id, subtract_exec_time=True, exec_time_var_name="delta_cycles"):
+    def add_deadline_restore(
+            self, task_id, father_id=None, updating_children=False,
+            subtract_exec_time=False, exec_time_var_name="delta_cycles"):
+        """Generates a string with C instructions to restore task deadlines.
+
+        Deadlines are updated on task exit as follows:
+        1. if the task has no father then the deadline is reset to twice
+            the app deadline, otherwise it is reset to the father's old value;
+        2. the deadline of enabled children is set to father's old value;
+        3. the task execution time is subtracted to *all* the deadlines.
+
+        This function produces C code to take care of point 1 or 2,
+        depending on `updating_children` argument value.
+        Point 3 is in charge of scheduler C firmware.
+
+        Parameters
+        ----------
+
+        task_id : str
+            the id of the task whose deadline we are restoring.
+        father_id: str
+            the name of task_id father (default value is None, meaning that you
+            are the first task of an app.
+        subtract_exec_time: boolean
+            if set to True then `exec_time_var_name` is subtracted to the
+            deadline (default value is False).
+        exec_time_var_name: str
+            the identifier of the variable storing the execution cycles in C
+            firmware (default value is "delta_cycles").
+
+        Returns
+        _______
+
+        deadline_string: str
+            a string representing an header define that stores the code to
+            properly update the deadline.
+        """
+        version = "!task_struct_%s.deadlineVersion & 0x1" % (
+            father_id,)  # old version
+        # if(updating_children):
+        #     version = "!task_struct_%s.deadlineVersion & 0x1" %(father_id,)#old version
+        # else:
+        #     version = "task_struct_%s.deadlineVersion" %(father_id,)#current version
 
         app_list_iter = iter(sorted(
             self.tasks_dict[task_id].apps, key=lambda x: self.apps_dict[x].x_min, reverse=False))
         app_id = next(app_list_iter)
 
+        # your father is in your app
+        if(father_id and (set(self.tasks_dict[father_id].apps) & set(self.tasks_dict[task_id].apps))):
+            # TODO: probably does not work with apps with shared tasks
+            new_deadline = "task_struct_%s.deadline[%s]" % (father_id, version)
+            if(subtract_exec_time):
+                new_deadline += " -%s" % (exec_time_var_name,)
+        else:
+            new_deadline = 2*self.apps_dict[app_id].x_min
+            if(subtract_exec_time):
+                new_deadline = str(new_deadline) + \
+                    " -%s" % (exec_time_var_name,)
+
         deadline_string = "if(app_struct_%s.isActive[app_struct_%s.isActiveVersion]) { task_struct_%s.deadline[!task_struct_%s.deadlineVersion & 0x1] = %s; task_struct_%s.deadlineVersion = !task_struct_%s.deadlineVersion & 0x1;}" % (
-            app_id, app_id, task_id, task_id, self.apps_dict[app_id].x_min, task_id, task_id)
+            app_id, app_id, task_id, task_id, new_deadline, task_id, task_id)
 
         for app_id in app_list_iter:
+            # your father is in your app
+            if(father_id and (set(self.tasks_dict[father_id].apps) & set(self.tasks_dict[task_id].apps))):
+                # TODO: probably does not work with apps with shared tasks
+                new_deadline = "task_struct_%s.deadline[%s]" % (
+                    father_id, version)  # previous father's deadline
+                if(subtract_exec_time):
+                    new_deadline += " -%s" % (exec_time_var_name,)
+            else:
+                new_deadline = 2*self.apps_dict[app_id].x_min
+                if(subtract_exec_time):
+                    new_deadline = str(new_deadline) + \
+                        " -%s" % (exec_time_var_name,)
+
             deadline_string += "else if(app_struct_%s.isActive[app_struct_%s.isActiveVersion]) { task_struct_%s.deadline[!task_struct_%s.deadlineVersion & 0x1] = %s; task_struct_%s.deadlineVersion = !task_struct_%s.deadlineVersion & 0x1;}" % (
-                app_id, app_id, task_id, task_id, self.apps_dict[app_id].x_min, task_id, task_id)
+                app_id, app_id, task_id, task_id, new_deadline, task_id, task_id)
 
         return deadline_string
 
@@ -223,7 +289,7 @@ class Tasks:
 
             # set deadlines for newly enabled tasks
             task_enabler_string = task_enabler_string.replace(
-                "DEADLINES_UPDATE", self.add_deadline_restore(child_name))
+                "DEADLINES_UPDATE", self.add_deadline_restore(child_name, father_id=father_task_id, updating_children=True))
 
             function_string += task_enabler_string
 
@@ -259,10 +325,25 @@ class Tasks:
                 if task_id == self.apps_dict[app].get_final_task():
                     define_value += self.add_throughput_update(task_id, app)
                     break
-            define_value += self.add_tasks_enabler_function(task_id)
+
+            # first restore my deadline, then my children's one
+            # if I'm the initial task then my deadline is initialized to 1/tput,
+            # otherwise it's set to my father's previous deadline
+            # TODO: multiple fathers are not yet fully supported
+
+            predecessors = list(self.tasks_graph.predecessors(task_id))
+            if(len(predecessors) > 1):
+                print(
+                    "WARNING: multiple fathers are not yet fully supported, probably...")
+            if(predecessors and set(self.tasks_dict[predecessors[0]].apps) & set(task_props.apps)):
+                father_name = predecessors[0]
+            else:
+                father_name = None
             define_value += self.add_deadline_restore(
-                task_id, subtract_exec_time=False)
-            # compute and update the app througput if task_id is last
+                task_id, father_id=father_name)
+
+            # children deadline is update thanks to the add_tasks_enabler_function
+            define_value += self.add_tasks_enabler_function(task_id)
             header.add_define((define_key, define_value))
 
     def add_tasks_structs(self, header):
@@ -296,7 +377,6 @@ class Tasks:
                 "POINTER", "&%s" % (task_id,))
             structs.append(task_struct_define)
         define_string = "\t\\\n\t".join(structs)
-        print(define_string)
         header.add_define(("TASKS_STRUCTS", define_string))
 
     def add_tasks_array(self, header):

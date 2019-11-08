@@ -1,5 +1,5 @@
 typedef struct task_struct {
-    int e_wc;
+    unsigned int e_wc;
     struct task_struct* in_set[3];
     int in_set_count;
     unsigned long int deadline[2];

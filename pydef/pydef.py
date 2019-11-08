@@ -1,4 +1,5 @@
 import yaml
+import sys
 
 from headergen import Header
 import networkx as nx
@@ -49,9 +50,14 @@ def is_dangerous(output_type):
 ENTRY POINT
 """
 
+if len(sys.argv)<2:
+    print("ERROR: missing YAML file")
+    print("Usage: pydef.py <YAML file> [output path]")
+    sys.exit(1)
+
 T = Tasks()
 A = Applications()
-d = read_yaml_file("example.yaml")
+d = read_yaml_file(sys.argv[1])
 T.build_tasks_dict(d)
 A.build_apps_dict(d, T.get_tasks_dict())
 T.set_apps_dict(A.get_apps_dict())
@@ -71,9 +77,13 @@ for node in G.nodes():
         print("WARNING: potential hidden dependency from %s" % (node))
 
 H = Header()
+H.add_prefixes(d.get("HEADER PREFIX", []))
 T.generate_tasks_defines(H)
 A.generate_apps_defines(H)
-H.write_file("header.h")
+output_path = "header.h"
+if len(sys.argv)>=3:
+    output_path = sys.argv[2]
+H.write_file(output_path)
 
 # nx.draw(T.get_tasks_graph(), with_labels=True)
 # plt.show()

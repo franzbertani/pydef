@@ -1,0 +1,78 @@
+TASKS:
+    - id: sense
+      in_set: []
+      output:
+          name: sense_out
+          type: acc_struct_t
+      e_bc: 20
+      e_wc: 80
+    - id: lowpass
+      in_set:
+          - task_id: sense
+            dependency_type: simple
+      output:
+          name: lowpass_out
+          type: acc_struct_t*
+      e_bc: 15
+      e_wc: 25
+    - id: median
+      in_set:
+          - task_id: lowpass
+            dependency_type: simple
+      output:
+          name: median_out
+          type: acc_struct_t*
+      e_bc: 15
+      e_wc: 25
+    - id: classify
+      in_set:
+          - task_id: median
+            dependency_type: simple
+      output:
+          name: classify_out
+          type: int
+      e_bc: 15
+      e_wc: 40
+    - id: operate
+      in_set:
+          - task_id: classify
+            dependency_type: simple
+      output:
+          name: operate_out
+          type: int
+      e_bc: 15
+      e_wc: 30
+    - id: compress
+      in_set:
+          - task_id: median
+            dependency_type: simple
+      output:
+          name: compress_out
+          type: acc_struct_t*
+      e_bc: 15
+      e_wc: 40
+    - id: send
+      in_set:
+          - task_id: compress
+            dependency_type: simple
+      output:
+          name: send_out
+          type: int
+      e_bc: 15
+      e_wc: 50
+
+APPLICATIONS:
+    - id: app_1
+      tasks: [sense, lowpass, median, classify, operate]
+      initial_task: sense
+      final_task: operate
+      x_min: 3
+    - id: app_2
+      tasks: [compress, send]
+      initial_task: compress
+      final_task: send
+      x_min: 1
+
+HEADER PREFIX:
+    - path: "eval/acc_struct_t.h"
+

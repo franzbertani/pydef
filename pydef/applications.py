@@ -121,7 +121,6 @@ class Applications:
         structs = []
         for k, v in self.apps_dict.items():
             app_define = template.replace("APP", k)
-            print(v.x_min)
             app_define = app_define.replace("TP", str(v.x_min))
             app_define = app_define.replace(
                 "TASKS_COUNT", str(len(v.tasks_dict)))
@@ -134,7 +133,6 @@ class Applications:
                 "FINAL_TASK", "&task_struct_%s" % (v.get_final_task(),))
             structs.append(app_define)
         define_string = "\t\\\n\t".join(structs)
-        print(define_string)
         header.add_define(("APP_STRUCTS", define_string))
 
     def add_apps_array(self, header):

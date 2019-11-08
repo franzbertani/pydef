@@ -9,6 +9,10 @@ class Header:
 
     def __init__(self):
         self.lines = []
+        self.prefixes = []
+
+    def add_prefixes(self, paths_list):
+        self.prefixes = paths_list
 
     def write_file(self, file_path):
         """Write on an *.h file the header
@@ -20,6 +24,15 @@ class Header:
             Path to the desired write location
         """
         with open(file_path, "w") as output:
+            for prefix in self.prefixes:
+                path = prefix.get("path", "")
+                try:
+                    with open(path, "r") as prefix_file:
+                        lines = prefix_file.read()
+                        output.writelines(lines)
+                except FileNotFoundError:
+                    print("Header prefix file %s not found, skipping" %(prefix))
+                    continue
             with open(struct_templates, "r") as st:
                 lines = st.read()
                 output.writelines(lines)
@@ -30,6 +43,7 @@ class Header:
             with open(helper_functions, "r") as infile:
                 template = infile.read()
                 output.write(template)
+        print("DONE: header file succesfully generated at %s" %(file_path,))
 
     def add_define(self, define_tuple):
         """Add a new define to the header file

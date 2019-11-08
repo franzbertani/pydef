@@ -8,8 +8,6 @@
     #include <msp430fr6989.h>
 #endif
 
-#include "fake_sensor.h"
-
 DECLARE_OUTPUT_VARIABLES
 EXTERN_VARS
 
@@ -25,30 +23,55 @@ void activate_new_app();
 void manage_underperf();
 void manage_overperf();
 
-BEGIN_TASK_task_1
-    siren_command("PRINTF: running task 1\n");
-    int t1_out;
-    /* t1_out = get_sample(); */
+BEGIN_TASK_sense
+    siren_command("PRINTF: running SENSE\n");
+    acc_struct_t sense_out;
     __delay_cycles(40000);
-    RETURN_task_1
+    RETURN_sense
 END_TASK
 
-BEGIN_TASK_task_2
-    siren_command("PRINTF: running task 2\n");
-    int t2_output;
-    /* t2_output = task_1 + 10; */
+BEGIN_TASK_lowpass
+    siren_command("PRINTF: running LOWPASS\n");
+    acc_struct_t* lowpass_out;
     __delay_cycles(25000);
-    siren_command("LOG_EVENT: end app1\n");
-    RETURN_task_2
+    RETURN_lowpass
 END_TASK
 
-BEGIN_TASK_task_3
-    siren_command("PRINTF: running task 3\n");
-    int t3_output;
-    /* t3_output = task_1 * 10; */
-    __delay_cycles(15000);
-    siren_command("LOG_EVENT: end app2\n");
-    RETURN_task_3
+BEGIN_TASK_median
+    siren_command("PRINTF: running MEDIAN\n");
+    acc_struct_t* median_out;
+    __delay_cycles(25000);
+    RETURN_median
+END_TASK
+
+BEGIN_TASK_classify
+    siren_command("PRINTF: running CLASSIFY\n");
+    int classify_out;
+    __delay_cycles(40000);
+    RETURN_classify
+END_TASK
+
+BEGIN_TASK_operate
+    siren_command("PRINTF: running OPERATE\n");
+    int operate_out;
+    __delay_cycles(30000);
+    siren_command("LOG_EVENT: app 1 END\n");
+    RETURN_operate
+END_TASK
+
+BEGIN_TASK_compress
+    siren_command("PRINTF: running COMPRESS\n");
+    int compress_out;
+    __delay_cycles(40000);
+    RETURN_compress
+END_TASK
+
+BEGIN_TASK_send
+    siren_command("PRINTF: running SEND\n");
+    int send_out;
+    __delay_cycles(50000);
+    siren_command("LOG_EVENT: app 2 END\n");
+    RETURN_send
 END_TASK
 
 TASKS_STRUCTS
@@ -208,7 +231,7 @@ void scheduler(){
         seen_resets = resets;
         if(next_task == 1){
             siren_command("PRINTF: restore\n");
-            RESTORE(g_task_1, var_struct_task_1, 0);
+            //RESTORE(g_task_1, var_struct_task_1, 0);
         }
     }
 
@@ -220,6 +243,17 @@ void scheduler(){
         siren_command("START_CCOUNT: sched\n");
         //sort array of enabled tasks based on deadlines, probably a rb tree is better
         heapsort(enabled_task_array, enabled_task_count);
+
+        siren_command("PRINTF: sense[%l,%l] version=%u\n", task_struct_sense.deadline[0],task_struct_sense.deadline[1], task_struct_sense.deadlineVersion);
+        siren_command("PRINTF: lowpass[%l,%l] version=%u\n", task_struct_lowpass.deadline[0],task_struct_lowpass.deadline[1], task_struct_lowpass.deadlineVersion);
+        siren_command("PRINTF: median[%l,%l] version=%u\n", task_struct_median.deadline[0],task_struct_median.deadline[1], task_struct_median.deadlineVersion);
+        siren_command("PRINTF: classify[%l,%l] version=%u\n", task_struct_classify.deadline[0],task_struct_classify.deadline[1], task_struct_classify.deadlineVersion);
+        siren_command("PRINTF: operate[%l,%l] version=%u\n", task_struct_operate.deadline[0],task_struct_operate.deadline[1], task_struct_operate.deadlineVersion);
+        siren_command("PRINTF: compress[%l,%l] version=%u\n", task_struct_compress.deadline[0],task_struct_compress.deadline[1], task_struct_compress.deadlineVersion);
+        siren_command("PRINTF: send[%l,%l] version=%u\n", task_struct_send.deadline[0],task_struct_send.deadline[1], task_struct_send.deadlineVersion);
+
+
+
         siren_command("PRINTF: selected task deadline %l\n", enabled_task_array[0]->deadline[enabled_task_array[0]->deadlineVersion]);
         //select and exec task with lowest deadline that fits the exec depth
         int selection = 0;
@@ -236,13 +270,14 @@ void scheduler(){
         siren_command("PRINTF: delta_cycles = %l\n", delta_cycles);
         siren_command("PRINTF: enabled_tasks %u\n", enabled_task_count);
         for(int i=0; i<enabled_task_count; i++){
-            if(i==selection) continue;
+            /* if(i==selection) continue; */
             version = enabled_task_array[i]->deadlineVersion;
             enabled_task_array[i]->deadline[!version & 0x1] = enabled_task_array[i]->deadline[version] - delta_cycles; //freq @ 1Mhz and deadline in microsec => cycles = microsec
             enabled_task_array[i]->deadlineVersion = !version & 0x1;
         }
         siren_command("GET_CCOUNT: sched-%l\n", &delta_cycles);
         siren_command("TEST_EXECUTION_CCOUNT: %l, schedule\n", delta_cycles);
+
         manage_overperf();
     }
 }
