@@ -7,13 +7,15 @@ typedef struct task_struct {
     unsigned int e_wc;
     struct task_struct* in_set[3];
     int in_set_count;
-    unsigned long int deadline[2];
+    long int deadline[2];
     short int deadlineVersion;
     void (*function_pointer)();
     char isEnabled[2];
     short int isEnabledVersion;
     char isActive[2];
     short int isActiveVersion;
+    short int marked_to_remove[2];
+    short int stopped;
 } task_struct_t;
 
 typedef struct app_struct {
@@ -22,20 +24,21 @@ typedef struct app_struct {
     task_struct_t* final_task;
     int tasks_count;
     unsigned long int x_min;
-    char x_ok[2];
+    short int x_ok[2];
     short int x_okVersion;
-    char isActive[2];
+    short int isActive[2];
     short int isActiveVersion;
 } app_struct_t;
 
 #define sense_output_var struct sense_var_struct {	\
-	    acc_struct_t version_array[1 + 1];	\
+	    acc_struct_t version_array[30 + 1];	\
 	    short int versions_count;	\
 	    short int window_begin_index;	\
 	    short int write_index;	\
+	    short int write_count;	\
 	    char is_full;	\
 	};	\
-	struct sense_var_struct __attribute__ ((persistent)) var_struct_sense = {.versions_count = 1, .window_begin_index = 0, .write_index = 0, .is_full = 0};	\
+	struct sense_var_struct __attribute__ ((persistent)) var_struct_sense = {.versions_count = 30, .window_begin_index = 0, .write_index = 0, .is_full = 0, .write_count=0};	\
 	acc_struct_t g_sense;	\
 		\
 	
@@ -44,9 +47,10 @@ typedef struct app_struct {
 	    short int versions_count;	\
 	    short int window_begin_index;	\
 	    short int write_index;	\
+	    short int write_count;	\
 	    char is_full;	\
 	};	\
-	struct lowpass_var_struct __attribute__ ((persistent)) var_struct_lowpass = {.versions_count = 1, .window_begin_index = 0, .write_index = 0, .is_full = 0};	\
+	struct lowpass_var_struct __attribute__ ((persistent)) var_struct_lowpass = {.versions_count = 1, .window_begin_index = 0, .write_index = 0, .is_full = 0, .write_count=0};	\
 	acc_struct_t* g_lowpass;	\
 		\
 	
@@ -55,9 +59,10 @@ typedef struct app_struct {
 	    short int versions_count;	\
 	    short int window_begin_index;	\
 	    short int write_index;	\
+	    short int write_count;	\
 	    char is_full;	\
 	};	\
-	struct median_var_struct __attribute__ ((persistent)) var_struct_median = {.versions_count = 1, .window_begin_index = 0, .write_index = 0, .is_full = 0};	\
+	struct median_var_struct __attribute__ ((persistent)) var_struct_median = {.versions_count = 1, .window_begin_index = 0, .write_index = 0, .is_full = 0, .write_count=0};	\
 	acc_struct_t* g_median;	\
 		\
 	
@@ -66,9 +71,10 @@ typedef struct app_struct {
 	    short int versions_count;	\
 	    short int window_begin_index;	\
 	    short int write_index;	\
+	    short int write_count;	\
 	    char is_full;	\
 	};	\
-	struct classify_var_struct __attribute__ ((persistent)) var_struct_classify = {.versions_count = 1, .window_begin_index = 0, .write_index = 0, .is_full = 0};	\
+	struct classify_var_struct __attribute__ ((persistent)) var_struct_classify = {.versions_count = 1, .window_begin_index = 0, .write_index = 0, .is_full = 0, .write_count=0};	\
 	int g_classify;	\
 		\
 	
@@ -77,9 +83,10 @@ typedef struct app_struct {
 	    short int versions_count;	\
 	    short int window_begin_index;	\
 	    short int write_index;	\
+	    short int write_count;	\
 	    char is_full;	\
 	};	\
-	struct operate_var_struct __attribute__ ((persistent)) var_struct_operate = {.versions_count = 1, .window_begin_index = 0, .write_index = 0, .is_full = 0};	\
+	struct operate_var_struct __attribute__ ((persistent)) var_struct_operate = {.versions_count = 1, .window_begin_index = 0, .write_index = 0, .is_full = 0, .write_count=0};	\
 	int g_operate;	\
 		\
 	
@@ -88,9 +95,10 @@ typedef struct app_struct {
 	    short int versions_count;	\
 	    short int window_begin_index;	\
 	    short int write_index;	\
+	    short int write_count;	\
 	    char is_full;	\
 	};	\
-	struct compress_var_struct __attribute__ ((persistent)) var_struct_compress = {.versions_count = 1, .window_begin_index = 0, .write_index = 0, .is_full = 0};	\
+	struct compress_var_struct __attribute__ ((persistent)) var_struct_compress = {.versions_count = 1, .window_begin_index = 0, .write_index = 0, .is_full = 0, .write_count=0};	\
 	acc_struct_t* g_compress;	\
 		\
 	
@@ -99,9 +107,10 @@ typedef struct app_struct {
 	    short int versions_count;	\
 	    short int window_begin_index;	\
 	    short int write_index;	\
+	    short int write_count;	\
 	    char is_full;	\
 	};	\
-	struct send_var_struct __attribute__ ((persistent)) var_struct_send = {.versions_count = 1, .window_begin_index = 0, .write_index = 0, .is_full = 0};	\
+	struct send_var_struct __attribute__ ((persistent)) var_struct_send = {.versions_count = 1, .window_begin_index = 0, .write_index = 0, .is_full = 0, .write_count=0};	\
 	int g_send;	\
 		\
 	
@@ -112,6 +121,13 @@ typedef struct app_struct {
 	operate_output_var	\
 	compress_output_var	\
 	send_output_var
+void sense();
+void lowpass();
+void median();
+void classify();
+void operate();
+void compress();
+void send();
 #define EXTERN_VARS extern app_struct_t* active_app_array[APPS_COUNT];	\
 	extern int active_app_count;	\
 	extern task_struct_t* enabled_task_array[TASK_COUNT];	\
@@ -148,6 +164,9 @@ typedef struct app_struct {
 	    var_struct_sense.is_full = 1;	\
 	    var_struct_sense.window_begin_index = (var_struct_sense.window_begin_index + 1) % (var_struct_sense.versions_count + 1);	\
 	}	\
+	if(var_struct_sense.write_count < var_struct_sense.versions_count){	\
+	    var_struct_sense.write_count++;	\
+	}	\
 		\
 	siren_command("GET_CCOUNT: task-%l\n", &delta_cycles);	\
 	siren_command("TEST_EXECUTION_CCOUNT: %l, sense\n", delta_cycles);	\
@@ -157,7 +176,7 @@ typedef struct app_struct {
 	/*     siren_command("PRINTF: %u\r\n", var_struct_sense.version_array[(var_struct_sense.window_begin_index + i) % (var_struct_sense.versions_count + 1)]); */	\
 	if(app_struct_app_1.isActive[app_struct_app_1.isActiveVersion]) { task_struct_sense.deadline[!task_struct_sense.deadlineVersion & 0x1] = 666666; task_struct_sense.deadlineVersion = !task_struct_sense.deadlineVersion & 0x1;}extern task_struct_t task_struct_lowpass;	\
 	short int task_struct_lowpass_enVersion = task_struct_lowpass.isEnabledVersion;	\
-	if(!(task_struct_lowpass.isEnabled[task_struct_lowpass_enVersion]) && (app_struct_app_1.isActive[app_struct_app_1.isActiveVersion])){	\
+	if(!(task_struct_lowpass.isEnabled[task_struct_lowpass_enVersion]) && (app_struct_app_1.isActive[app_struct_app_1.isActiveVersion]) && (var_struct_sense.write_count >= 10)){	\
 	    task_struct_lowpass.isEnabled[!task_struct_lowpass_enVersion & 0x1] |= 0x1;	\
 	    enabled_task_array[enabled_task_count] = &task_struct_lowpass;	\
 	    enabled_task_count++;	\
@@ -176,6 +195,9 @@ typedef struct app_struct {
 	    var_struct_lowpass.is_full = 1;	\
 	    var_struct_lowpass.window_begin_index = (var_struct_lowpass.window_begin_index + 1) % (var_struct_lowpass.versions_count + 1);	\
 	}	\
+	if(var_struct_lowpass.write_count < var_struct_lowpass.versions_count){	\
+	    var_struct_lowpass.write_count++;	\
+	}	\
 		\
 	siren_command("GET_CCOUNT: task-%l\n", &delta_cycles);	\
 	siren_command("TEST_EXECUTION_CCOUNT: %l, lowpass\n", delta_cycles);	\
@@ -185,7 +207,7 @@ typedef struct app_struct {
 	/*     siren_command("PRINTF: %u\r\n", var_struct_lowpass.version_array[(var_struct_lowpass.window_begin_index + i) % (var_struct_lowpass.versions_count + 1)]); */	\
 	if(app_struct_app_1.isActive[app_struct_app_1.isActiveVersion]) { task_struct_lowpass.deadline[!task_struct_lowpass.deadlineVersion & 0x1] = task_struct_sense.deadline[!task_struct_sense.deadlineVersion & 0x1]; task_struct_lowpass.deadlineVersion = !task_struct_lowpass.deadlineVersion & 0x1;}extern task_struct_t task_struct_median;	\
 	short int task_struct_median_enVersion = task_struct_median.isEnabledVersion;	\
-	if(!(task_struct_median.isEnabled[task_struct_median_enVersion]) && (app_struct_app_1.isActive[app_struct_app_1.isActiveVersion])){	\
+	if(!(task_struct_median.isEnabled[task_struct_median_enVersion]) && (app_struct_app_1.isActive[app_struct_app_1.isActiveVersion]) && (1)){	\
 	    task_struct_median.isEnabled[!task_struct_median_enVersion & 0x1] |= 0x1;	\
 	    enabled_task_array[enabled_task_count] = &task_struct_median;	\
 	    enabled_task_count++;	\
@@ -204,6 +226,9 @@ typedef struct app_struct {
 	    var_struct_median.is_full = 1;	\
 	    var_struct_median.window_begin_index = (var_struct_median.window_begin_index + 1) % (var_struct_median.versions_count + 1);	\
 	}	\
+	if(var_struct_median.write_count < var_struct_median.versions_count){	\
+	    var_struct_median.write_count++;	\
+	}	\
 		\
 	siren_command("GET_CCOUNT: task-%l\n", &delta_cycles);	\
 	siren_command("TEST_EXECUTION_CCOUNT: %l, median\n", delta_cycles);	\
@@ -213,7 +238,7 @@ typedef struct app_struct {
 	/*     siren_command("PRINTF: %u\r\n", var_struct_median.version_array[(var_struct_median.window_begin_index + i) % (var_struct_median.versions_count + 1)]); */	\
 	if(app_struct_app_1.isActive[app_struct_app_1.isActiveVersion]) { task_struct_median.deadline[!task_struct_median.deadlineVersion & 0x1] = task_struct_lowpass.deadline[!task_struct_lowpass.deadlineVersion & 0x1]; task_struct_median.deadlineVersion = !task_struct_median.deadlineVersion & 0x1;}extern task_struct_t task_struct_classify;	\
 	short int task_struct_classify_enVersion = task_struct_classify.isEnabledVersion;	\
-	if(!(task_struct_classify.isEnabled[task_struct_classify_enVersion]) && (app_struct_app_1.isActive[app_struct_app_1.isActiveVersion])){	\
+	if(!(task_struct_classify.isEnabled[task_struct_classify_enVersion]) && (app_struct_app_1.isActive[app_struct_app_1.isActiveVersion]) && (1)){	\
 	    task_struct_classify.isEnabled[!task_struct_classify_enVersion & 0x1] |= 0x1;	\
 	    enabled_task_array[enabled_task_count] = &task_struct_classify;	\
 	    enabled_task_count++;	\
@@ -222,7 +247,7 @@ typedef struct app_struct {
 	}	\
 	extern task_struct_t task_struct_compress;	\
 	short int task_struct_compress_enVersion = task_struct_compress.isEnabledVersion;	\
-	if(!(task_struct_compress.isEnabled[task_struct_compress_enVersion]) && (app_struct_app_2.isActive[app_struct_app_2.isActiveVersion])){	\
+	if(!(task_struct_compress.isEnabled[task_struct_compress_enVersion]) && (app_struct_app_2.isActive[app_struct_app_2.isActiveVersion]) && (1)){	\
 	    task_struct_compress.isEnabled[!task_struct_compress_enVersion & 0x1] |= 0x1;	\
 	    enabled_task_array[enabled_task_count] = &task_struct_compress;	\
 	    enabled_task_count++;	\
@@ -241,6 +266,9 @@ typedef struct app_struct {
 	    var_struct_classify.is_full = 1;	\
 	    var_struct_classify.window_begin_index = (var_struct_classify.window_begin_index + 1) % (var_struct_classify.versions_count + 1);	\
 	}	\
+	if(var_struct_classify.write_count < var_struct_classify.versions_count){	\
+	    var_struct_classify.write_count++;	\
+	}	\
 		\
 	siren_command("GET_CCOUNT: task-%l\n", &delta_cycles);	\
 	siren_command("TEST_EXECUTION_CCOUNT: %l, classify\n", delta_cycles);	\
@@ -250,7 +278,7 @@ typedef struct app_struct {
 	/*     siren_command("PRINTF: %u\r\n", var_struct_classify.version_array[(var_struct_classify.window_begin_index + i) % (var_struct_classify.versions_count + 1)]); */	\
 	if(app_struct_app_1.isActive[app_struct_app_1.isActiveVersion]) { task_struct_classify.deadline[!task_struct_classify.deadlineVersion & 0x1] = task_struct_median.deadline[!task_struct_median.deadlineVersion & 0x1]; task_struct_classify.deadlineVersion = !task_struct_classify.deadlineVersion & 0x1;}extern task_struct_t task_struct_operate;	\
 	short int task_struct_operate_enVersion = task_struct_operate.isEnabledVersion;	\
-	if(!(task_struct_operate.isEnabled[task_struct_operate_enVersion]) && (app_struct_app_1.isActive[app_struct_app_1.isActiveVersion])){	\
+	if(!(task_struct_operate.isEnabled[task_struct_operate_enVersion]) && (app_struct_app_1.isActive[app_struct_app_1.isActiveVersion]) && (1)){	\
 	    task_struct_operate.isEnabled[!task_struct_operate_enVersion & 0x1] |= 0x1;	\
 	    enabled_task_array[enabled_task_count] = &task_struct_operate;	\
 	    enabled_task_count++;	\
@@ -269,6 +297,9 @@ typedef struct app_struct {
 	    var_struct_operate.is_full = 1;	\
 	    var_struct_operate.window_begin_index = (var_struct_operate.window_begin_index + 1) % (var_struct_operate.versions_count + 1);	\
 	}	\
+	if(var_struct_operate.write_count < var_struct_operate.versions_count){	\
+	    var_struct_operate.write_count++;	\
+	}	\
 		\
 	siren_command("GET_CCOUNT: task-%l\n", &delta_cycles);	\
 	siren_command("TEST_EXECUTION_CCOUNT: %l, operate\n", delta_cycles);	\
@@ -276,16 +307,20 @@ typedef struct app_struct {
 	/* siren_command("PRINTF: var_struct_operate :\r\n"); */	\
 	/* for(int i=0; i<var_struct_operate.versions_count; i++) */	\
 	/*     siren_command("PRINTF: %u\r\n", var_struct_operate.version_array[(var_struct_operate.window_begin_index + i) % (var_struct_operate.versions_count + 1)]); */	\
-	unsigned long int value = 333333 - task_struct_operate.deadline[task_struct_operate.deadlineVersion] - delta_cycles;	\
+	/* long int value = 333333 - task_struct_operate.deadline[task_struct_operate.deadlineVersion] - delta_cycles; */	\
+	long int value = task_struct_operate.deadline[task_struct_operate.deadlineVersion] - delta_cycles;	\
+		\
 	siren_command("PRINTF: updating tput aftrer operate\n");	\
 	if (value < 0){	\
 	    siren_command("PRINTF: underperforming\n");	\
 	    app_struct_app_1.x_ok[!app_struct_app_1.x_okVersion & 0x1] = -1;	\
 	    app_struct_app_1.x_okVersion = !app_struct_app_1.x_okVersion & 0x1;	\
+	    manage_underperf();	\
 	} else if (value > 0) {	\
 	    siren_command("PRINTF: overperforming\n");	\
 	    app_struct_app_1.x_ok[!app_struct_app_1.x_okVersion & 0x1] = 1;	\
 	    app_struct_app_1.x_okVersion = !app_struct_app_1.x_okVersion & 0x1;	\
+	    manage_overperf();	\
 	} else {	\
 	    siren_command("PRINTF: performance ok\n");	\
 	    app_struct_app_1.x_ok[!app_struct_app_1.x_okVersion & 0x1] = 0;	\
@@ -303,6 +338,9 @@ typedef struct app_struct {
 	    var_struct_compress.is_full = 1;	\
 	    var_struct_compress.window_begin_index = (var_struct_compress.window_begin_index + 1) % (var_struct_compress.versions_count + 1);	\
 	}	\
+	if(var_struct_compress.write_count < var_struct_compress.versions_count){	\
+	    var_struct_compress.write_count++;	\
+	}	\
 		\
 	siren_command("GET_CCOUNT: task-%l\n", &delta_cycles);	\
 	siren_command("TEST_EXECUTION_CCOUNT: %l, compress\n", delta_cycles);	\
@@ -312,7 +350,7 @@ typedef struct app_struct {
 	/*     siren_command("PRINTF: %u\r\n", var_struct_compress.version_array[(var_struct_compress.window_begin_index + i) % (var_struct_compress.versions_count + 1)]); */	\
 	if(app_struct_app_2.isActive[app_struct_app_2.isActiveVersion]) { task_struct_compress.deadline[!task_struct_compress.deadlineVersion & 0x1] = 2000000; task_struct_compress.deadlineVersion = !task_struct_compress.deadlineVersion & 0x1;}extern task_struct_t task_struct_send;	\
 	short int task_struct_send_enVersion = task_struct_send.isEnabledVersion;	\
-	if(!(task_struct_send.isEnabled[task_struct_send_enVersion]) && (app_struct_app_2.isActive[app_struct_app_2.isActiveVersion])){	\
+	if(!(task_struct_send.isEnabled[task_struct_send_enVersion]) && (app_struct_app_2.isActive[app_struct_app_2.isActiveVersion]) && (1)){	\
 	    task_struct_send.isEnabled[!task_struct_send_enVersion & 0x1] |= 0x1;	\
 	    enabled_task_array[enabled_task_count] = &task_struct_send;	\
 	    enabled_task_count++;	\
@@ -331,6 +369,9 @@ typedef struct app_struct {
 	    var_struct_send.is_full = 1;	\
 	    var_struct_send.window_begin_index = (var_struct_send.window_begin_index + 1) % (var_struct_send.versions_count + 1);	\
 	}	\
+	if(var_struct_send.write_count < var_struct_send.versions_count){	\
+	    var_struct_send.write_count++;	\
+	}	\
 		\
 	siren_command("GET_CCOUNT: task-%l\n", &delta_cycles);	\
 	siren_command("TEST_EXECUTION_CCOUNT: %l, send\n", delta_cycles);	\
@@ -338,16 +379,20 @@ typedef struct app_struct {
 	/* siren_command("PRINTF: var_struct_send :\r\n"); */	\
 	/* for(int i=0; i<var_struct_send.versions_count; i++) */	\
 	/*     siren_command("PRINTF: %u\r\n", var_struct_send.version_array[(var_struct_send.window_begin_index + i) % (var_struct_send.versions_count + 1)]); */	\
-	unsigned long int value = 1000000 - task_struct_send.deadline[task_struct_send.deadlineVersion] - delta_cycles;	\
+	/* long int value = 1000000 - task_struct_send.deadline[task_struct_send.deadlineVersion] - delta_cycles; */	\
+	long int value = task_struct_send.deadline[task_struct_send.deadlineVersion] - delta_cycles;	\
+		\
 	siren_command("PRINTF: updating tput aftrer send\n");	\
 	if (value < 0){	\
 	    siren_command("PRINTF: underperforming\n");	\
 	    app_struct_app_2.x_ok[!app_struct_app_2.x_okVersion & 0x1] = -1;	\
 	    app_struct_app_2.x_okVersion = !app_struct_app_2.x_okVersion & 0x1;	\
+	    manage_underperf();	\
 	} else if (value > 0) {	\
 	    siren_command("PRINTF: overperforming\n");	\
 	    app_struct_app_2.x_ok[!app_struct_app_2.x_okVersion & 0x1] = 1;	\
 	    app_struct_app_2.x_okVersion = !app_struct_app_2.x_okVersion & 0x1;	\
+	    manage_overperf();	\
 	} else {	\
 	    siren_command("PRINTF: performance ok\n");	\
 	    app_struct_app_2.x_ok[!app_struct_app_2.x_okVersion & 0x1] = 0;	\
@@ -356,13 +401,13 @@ typedef struct app_struct {
 	if(app_struct_app_2.isActive[app_struct_app_2.isActiveVersion]) { task_struct_send.deadline[!task_struct_send.deadlineVersion & 0x1] = task_struct_compress.deadline[!task_struct_compress.deadlineVersion & 0x1]; task_struct_send.deadlineVersion = !task_struct_send.deadlineVersion & 0x1;}
 #define END_TASK }
 
-#define TASKS_STRUCTS task_struct_t __attribute__ ((persistent)) task_struct_sense = {.e_wc = 80, .in_set = {}, .in_set_count = 0, .function_pointer = &sense, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0};	\
-	task_struct_t __attribute__ ((persistent)) task_struct_lowpass = {.e_wc = 25, .in_set = {&task_struct_sense}, .in_set_count = 1, .function_pointer = &lowpass, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0};	\
-	task_struct_t __attribute__ ((persistent)) task_struct_median = {.e_wc = 25, .in_set = {&task_struct_lowpass}, .in_set_count = 1, .function_pointer = &median, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0};	\
-	task_struct_t __attribute__ ((persistent)) task_struct_compress = {.e_wc = 40, .in_set = {&task_struct_median}, .in_set_count = 1, .function_pointer = &compress, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0};	\
-	task_struct_t __attribute__ ((persistent)) task_struct_send = {.e_wc = 50, .in_set = {&task_struct_compress}, .in_set_count = 1, .function_pointer = &send, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0};	\
-	task_struct_t __attribute__ ((persistent)) task_struct_classify = {.e_wc = 40, .in_set = {&task_struct_median}, .in_set_count = 1, .function_pointer = &classify, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0};	\
-	task_struct_t __attribute__ ((persistent)) task_struct_operate = {.e_wc = 30, .in_set = {&task_struct_classify}, .in_set_count = 1, .function_pointer = &operate, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0};
+#define TASKS_STRUCTS task_struct_t __attribute__ ((persistent)) task_struct_sense = {.e_wc = 80, .in_set = {}, .in_set_count = 0, .function_pointer = &sense, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0, .marked_to_remove = {0x0,0x0}, .stopped=0};	\
+	task_struct_t __attribute__ ((persistent)) task_struct_lowpass = {.e_wc = 50, .in_set = {&task_struct_sense}, .in_set_count = 1, .function_pointer = &lowpass, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0, .marked_to_remove = {0x0,0x0}, .stopped=0};	\
+	task_struct_t __attribute__ ((persistent)) task_struct_median = {.e_wc = 32, .in_set = {&task_struct_lowpass}, .in_set_count = 1, .function_pointer = &median, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0, .marked_to_remove = {0x0,0x0}, .stopped=0};	\
+	task_struct_t __attribute__ ((persistent)) task_struct_compress = {.e_wc = 40, .in_set = {&task_struct_median}, .in_set_count = 1, .function_pointer = &compress, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0, .marked_to_remove = {0x0,0x0}, .stopped=0};	\
+	task_struct_t __attribute__ ((persistent)) task_struct_send = {.e_wc = 90, .in_set = {&task_struct_compress}, .in_set_count = 1, .function_pointer = &send, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0, .marked_to_remove = {0x0,0x0}, .stopped=0};	\
+	task_struct_t __attribute__ ((persistent)) task_struct_classify = {.e_wc = 40, .in_set = {&task_struct_median}, .in_set_count = 1, .function_pointer = &classify, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0, .marked_to_remove = {0x0,0x0}, .stopped=0};	\
+	task_struct_t __attribute__ ((persistent)) task_struct_operate = {.e_wc = 30, .in_set = {&task_struct_classify}, .in_set_count = 1, .function_pointer = &operate, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0, .marked_to_remove = {0x0,0x0}, .stopped=0};
 #define TASK_ARRAY task_struct_t* __attribute__ ((persistent)) task_array[7] = {&task_struct_sense, &task_struct_lowpass, &task_struct_median, &task_struct_classify, &task_struct_operate, &task_struct_compress, &task_struct_send};	\
 	task_struct_t* __attribute__ ((persistent)) active_task_array[7] = {};	\
 	int __attribute__ ((persistent)) active_task_count = 0;	\

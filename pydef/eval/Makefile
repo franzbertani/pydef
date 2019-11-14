@@ -1,5 +1,5 @@
-SOURCES		=  eval.c $(SIREN_LIB)/printf.c
-OBJECTS		=  eval.o $(SIREN_LIB)/printf.o
+SOURCES		=  eval.c sort.c $(SIREN_LIB)/printf.c
+OBJECTS		=  eval.o sort.o $(SIREN_LIB)/printf.o
 
 CC          = $(MSPGCC_ROOT)/msp430-elf-gcc
 DEVICE		= msp430fr6989
@@ -15,8 +15,7 @@ MSP430_FLAGS		= -mmcu=$(DEVICE) -mhwmult=none -D__$(DEVICE)__ -DDEPRECATED -mlar
 REDUCE_SIZE_FLAGS	= -fdata-sections -ffunction-sections -finline-small-functions -O0
 SIM_FLAGS			= -D__MSPSIM__
 
-CFLAGS				= $(CSTD_FLAGS) $(DEBUG_FLAGS) $(ERROR_FLAGS) $(NO_ERROR_FLAGS) $(LIB_INCLUDES) $(MSP430_FLAGS) $(REDUCE_SIZE_FLAGS) $(SIM_FLAGS)
-
+CFLAGS				= $(CSTD_FLAGS) $(DEBUG_FLAGS) $(ERROR_FLAGS) $(NO_ERROR_FLAGS) $(LIB_INCLUDES) $(MSP430_FLAGS) $(REDUCE_SIZE_FLAGS) $(SIM_FLAGS) -DDEBUG=$(DEBUG)
 
 LFLAGS = -Wl,--gc-sections -Wl,--reduce-memory-overheads -Wl,--stats -Wl,--relax
 LIBS = -L $(MSPGCC_ROOT)/../include/

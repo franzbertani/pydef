@@ -1,92 +1,37 @@
-#include <stdio.h>
-#include <stdint.h>
+#include "header.h"
 #include "printf.h"
-#include "sort.h"
-
-#ifndef HEADER_H
-#define HEADER_H
-    #include "header.h"
-#endif
-
-#ifndef MSPLIB_H
-#define MSPLIB_H
-    #include <msp430fr6989.h>
-#endif
+#include <msp430fr6989.h>
 
 DECLARE_OUTPUT_VARIABLES
 EXTERN_VARS
 
+
 int __attribute__ ((persistent)) resets = -1;
 int __attribute__ ((persistent)) seen_resets = 0;
 int __attribute__ ((persistent)) next_task = 0;
-long int __attribute__ ((persistent)) tardis_time = 0;
+int __attribute__ ((persistent)) tardis_time = 0;
 unsigned long int __attribute__ ((persistent)) delta_cycles = 0;
 unsigned long int __attribute__ ((persistent)) frequency = 0;
 unsigned long int __attribute__ ((persistent)) exec_depth_x100 = 0;
 unsigned int __attribute__ ((persistent)) voltageX100 = 0;
-short int __attribute__ ((persistent)) is_pruning = 0;
-short int __attribute__ ((persistent)) isSenseEnabled = 1;
-
-
 void activate_new_app();
 void manage_underperf();
 void manage_overperf();
-int check_if_new(task_struct_t*);
-void set_threshold(int);
-unsigned long int get_exec_depth_x100();
-void initialize();
-void prune_tasks();
 
 BEGIN_TASK_sense
     siren_command("PRINTF: running SENSE\n");
-    acc_struct_t sense_out;
-    __delay_cycles(80000);
-    siren_command("START_TIME: misd(SENSE)\n");
+    int sense_out;
+    sense_out = 1;
+    __delay_cycles(40000);
     RETURN_sense
 END_TASK
 
 BEGIN_TASK_lowpass
     siren_command("PRINTF: running LOWPASS\n");
-    acc_struct_t* lowpass_out;
-    __delay_cycles(50000);
+    int lowpass_out;
+    lowpass_out = 1;
+    __delay_cycles(25000);
     RETURN_lowpass
-END_TASK
-
-BEGIN_TASK_median
-    siren_command("PRINTF: running MEDIAN\n");
-    acc_struct_t* median_out;
-    __delay_cycles(32000);
-    RETURN_median
-END_TASK
-
-BEGIN_TASK_classify
-    siren_command("PRINTF: running CLASSIFY\n");
-    int classify_out;
-    __delay_cycles(40000);
-    RETURN_classify
-END_TASK
-
-BEGIN_TASK_operate
-    siren_command("PRINTF: running OPERATE\n");
-    int operate_out;
-    __delay_cycles(30000);
-    siren_command("LOG_EVENT: app 1 END\n");
-    RETURN_operate
-END_TASK
-
-BEGIN_TASK_compress
-    siren_command("PRINTF: running COMPRESS\n");
-    int compress_out;
-    __delay_cycles(40000);
-    RETURN_compress
-END_TASK
-
-BEGIN_TASK_send
-    siren_command("PRINTF: running SEND\n");
-    int send_out;
-    __delay_cycles(90000);
-    siren_command("LOG_EVENT: app 2 END\n");
-    RETURN_send
 END_TASK
 
 TASKS_STRUCTS
@@ -112,6 +57,58 @@ unsigned long int get_exec_depth_x100(){
     exec_depth_x100 = voltageX100*voltageX100*235;
     return exec_depth_x100;
 }
+
+
+void heapify(task_struct_t* a[],int n) {
+    task_struct_t *item;
+    int k,i,j;
+    for (k=1;k<n;k++) {
+        item = a[k];
+        i = k;
+        j = (i-1)/2;
+        while((i>0)&&(item->deadline[item->deadlineVersion] > a[j]->deadline[a[j]->deadlineVersion])) {
+            a[i] = a[j];
+            i = j;
+            j = (i-1)/2;
+        }
+        a[i] = item;
+    }
+}
+
+
+void adjust(task_struct_t* a[],int n) {
+    int i,j;
+    task_struct_t* item;
+    j = 0;
+    item = a[j];
+    i = 2*j+1;
+    while(i<=n-1) {
+        if(i+1 <= n-1)
+           if(a[i]->deadline[a[i]->deadlineVersion] < a[i+1]->deadline[a[i+1]->deadlineVersion])
+            i++;
+        if(item->deadline[item->deadlineVersion] < a[i]->deadline[a[i]->deadlineVersion]) {
+            a[j] = a[i];
+            j = i;
+            i = 2*j+1;
+        } else
+           break;
+    }
+    a[j] = item;
+}
+
+void heapsort(task_struct_t* a[],int n) {
+    task_struct_t* t;
+    int i;
+    heapify(a,n);
+    for (i=n-1;i>0;i--) {
+        t = a[0];
+        a[0] = a[i];
+        a[i] = t;
+        adjust(a,i);
+    }
+}
+
+
 
 void initialize(){
     siren_command("PRINTF: initialize after first boot\n");
@@ -188,95 +185,43 @@ void initialize(){
 void scheduler(){
     task_struct_t next_task_struct;
 
-    siren_command("START_CCOUNT: scheduler\n");
+    siren_command("START_CCOUNT: sched\n");
 
     if(seen_resets != resets){ // a reset occurred
         seen_resets = resets;
         if(next_task == 1){
-
-#if DEBUG
             siren_command("PRINTF: restore\n");
-#endif
-
-            if(is_pruning) prune_tasks();
             //RESTORE(g_task_1, var_struct_task_1, 0);
         }
     }
 
-    siren_command("GET_CCOUNT: scheduler-%l\n", &delta_cycles);
+    siren_command("GET_CCOUNT: sched-%l\n", &delta_cycles);
     siren_command("TEST_EXECUTION_CCOUNT: %l, scheduler restore\n", delta_cycles);
 
     short int version;
     while(1){
-        siren_command("START_CCOUNT: scheduler\n");
-
-        //just for the eval example
-        siren_command("GET_TIME: misd(SENSE)-%u\n", &isSenseEnabled);
-
-#if DEBUG
-        siren_command("PRINTF: SENSE enabled? %u\n", isSenseEnabled);
-#endif
-
-        if(isSenseEnabled){ //50Hz set in SIREN
-
-#if DEBUG
-            siren_command("PRINTF: SENSE re enabled\n");
-#endif
-
-            task_struct_sense.stopped=0;
-        }
-
+        siren_command("START_CCOUNT: sched\n");
         //sort array of enabled tasks based on deadlines, probably a rb tree is better
         heapsort(enabled_task_array, enabled_task_count);
 
-#if DEBUG
         siren_command("PRINTF: sense[%l,%l] version=%u\n", task_struct_sense.deadline[0],task_struct_sense.deadline[1], task_struct_sense.deadlineVersion);
         siren_command("PRINTF: lowpass[%l,%l] version=%u\n", task_struct_lowpass.deadline[0],task_struct_lowpass.deadline[1], task_struct_lowpass.deadlineVersion);
-        siren_command("PRINTF: median[%l,%l] version=%u\n", task_struct_median.deadline[0],task_struct_median.deadline[1], task_struct_median.deadlineVersion);
-        siren_command("PRINTF: classify[%l,%l] version=%u\n", task_struct_classify.deadline[0],task_struct_classify.deadline[1], task_struct_classify.deadlineVersion);
-        siren_command("PRINTF: operate[%l,%l] version=%u\n", task_struct_operate.deadline[0],task_struct_operate.deadline[1], task_struct_operate.deadlineVersion);
-        siren_command("PRINTF: compress[%l,%l] version=%u\n", task_struct_compress.deadline[0],task_struct_compress.deadline[1], task_struct_compress.deadlineVersion);
-        siren_command("PRINTF: send[%l,%l] version=%u\n", task_struct_send.deadline[0],task_struct_send.deadline[1], task_struct_send.deadlineVersion);
-        siren_command("PRINTF: selected task deadline %l\n", enabled_task_array[0]->deadline[enabled_task_array[0]->deadlineVersion]);
-        siren_command("PRINTF: is SENSE stopped? %u\n",enabled_task_array[0]->stopped);
-#endif
 
+        siren_command("PRINTF: selected task deadline %l\n", enabled_task_array[0]->deadline[enabled_task_array[0]->deadlineVersion]);
         //select and exec task with lowest deadline that fits the exec depth
         int selection = 0;
         unsigned long int exec_depth = get_exec_depth_x100();
-
-        while(selection < enabled_task_count && (enabled_task_array[selection]->stopped == 1 || exec_depth<=(enabled_task_array[selection]->e_wc) * 10)){ //e_wc is 10^3cycles, exec_depth is 10^2cycles
-            selection++;
-        }
-
+        while(selection < enabled_task_count && exec_depth<=(enabled_task_array[selection]->e_wc) * 10) selection++; //e_wc is 10^3cycles, exec_depth is 10^2cycles
         if(selection==enabled_task_count) {
-            siren_command("PRINTF: no task is currently available, sleeping for 1ms\n");
+            siren_command("PRINTF: no task fits the current energy budget\n");
             siren_command("SLEEP_FOR_TIME: 1000\n"); //1ms
-            for(short int i=0; i<enabled_task_count; i++){
-                enabled_task_array[i]->deadline[enabled_task_array[i]->deadlineVersion]-=1000;
-            }
         } else {
             next_task_struct = *(enabled_task_array[selection]);
-            if(next_task_struct.function_pointer == task_struct_sense.function_pointer ){
-                task_struct_sense.stopped = 1;
-            }
-            siren_command("GET_CCOUNT: scheduler-%l\n", &delta_cycles);
-            siren_command("TEST_EXECUTION_CCOUNT: %l, schedule\n", delta_cycles);
-
             (next_task_struct.function_pointer)();
 
-            if(next_task_struct.function_pointer == task_struct_sense.function_pointer){
-                if(var_struct_sense.write_count<10){
-                    short int version = task_struct_sense.deadlineVersion;
-                    task_struct_sense.deadline[version]=task_struct_sense.deadline[!version &0x1];
-                }
-            }
-
-#if DEBUG
+            //subtract to all deadlines of other tasks exec time (not to the one that we just run)
             siren_command("PRINTF: delta_cycles = %l\n", delta_cycles);
             siren_command("PRINTF: enabled_tasks %u\n", enabled_task_count);
-#endif
-            //subtract to all deadlines tasks exec time
             for(int i=0; i<enabled_task_count; i++){
                 /* if(i==selection) continue; */
                 version = enabled_task_array[i]->deadlineVersion;
@@ -284,121 +229,39 @@ void scheduler(){
                 enabled_task_array[i]->deadlineVersion = !version & 0x1;
             }
         }
+        siren_command("GET_CCOUNT: sched-%l\n", &delta_cycles);
+        siren_command("TEST_EXECUTION_CCOUNT: %l, schedule\n", delta_cycles);
+        manage_overperf();
     }
 }
 
-
-typedef struct queue {
-    task_struct_t* array[TASK_COUNT];
-    short int size;
-} queue_t;
-
-queue_t __attribute__ ((persistent)) queues[2];
-short int __attribute__ ((persistent)) valid_queue = 0;
-app_struct_t __attribute__ ((persist)) *removed;
-
-app_struct_t* remove_last_app(){
+void remove_last_app(){
     app_struct_t *app = active_app_array[active_app_count-1];
     short int isActiveVersion = app->isActiveVersion;
     app->isActive[!isActiveVersion & 0x1] = 0x0;
     active_app_count--;
-    removed = app;
-    queues[(!valid_queue) & 0x1].array[0] = removed->final_task;
-    queues[(!valid_queue) & 0x1].size++;
-    removed->final_task->marked_to_remove[(!valid_queue)&0x1] = 1;
-    is_pruning = 1;
-    valid_queue = (!valid_queue) & 0x1;
     app->isActiveVersion = !isActiveVersion & 0x1;
-    return app;
+    return;
 }
 
 void prune_tasks(){
-    if(removed->isActive[removed->isActiveVersion]){ //spento prima del flip finale in remove_last_app
-        queues[valid_queue].size=0;
-        is_pruning = 0;
-        return;
-    }
-
-    while(queues[valid_queue].size!=0){
-        task_struct_t *task = queues[valid_queue].array[queues[valid_queue].size-1];
-        queues[(!valid_queue) & 0x1].size--;
-        for(short int i=0; i<task->in_set_count; i++){
-            //controllo che le app del task iesimo siano tutte disattivate
-            short int remove=1;
-            for(short int j=0; j<APPS_COUNT && remove; j++){
-                for(short int k=0; k<app_array[j]->tasks_count && remove; k++){
-                    if(app_array[j]->app_tasks[k]==task && app_array[j]->isActive[app_array[j]->isActiveVersion])
-                        remove=0;
-                }
-            }
-            if(remove)
-                if(task->in_set[i]->marked_to_remove[valid_queue] != 1){
-                    //lo aggiungo
-                    //lo marko
-                    short int size = queues[(!valid_queue) & 0x1].size;
-                    queues[(!valid_queue) & 0x1].array[size] = task->in_set[i];
-                    queues[(!valid_queue) & 0x1].size++;
-                    task->in_set[i]->marked_to_remove[(!valid_queue) & 0x1] = 1;
-                }
-        }
-        //flippo valid_queue
-        valid_queue = (!valid_queue) & 0x1;
-    }
-    //rimuovo i marcati
-    for(short int i=0; i<TASK_COUNT; i++){
-        if(task_array[i]->marked_to_remove[valid_queue] ==1)
-
-            for(int j=0; j<active_task_count; j++){
-                if(active_task_array[j]==task_array[i]){
-                    active_task_array[j] = active_task_array[active_task_count-1];
-                    active_task_count--;
-                }
-
-            for(int j=0; j<enabled_task_count; j++){
-                if(enabled_task_array[j]==task_array[i]){
-                    enabled_task_array[j] = enabled_task_array[enabled_task_count-1];
-                    enabled_task_count--;
-                }
-
-            }
-            task_array[i]->marked_to_remove[valid_queue] = 0;
-            task_array[i]->deadline[0] = 0;
-            task_array[i]->deadline[1] = 0;
-            task_array[i]->isEnabled[0] = 0;
-            task_array[i]->isEnabled[1] = 0;
-            task_array[i]->isActive[0] = 0;
-            task_array[i]->isActive[1] = 0;
-    }
-    is_pruning = 0;
     return;
-    }
 }
 
 void reset_threshold(){
-    int energy_prediction[TASK_COUNT];
-    int max_energy_prediction = -10;
-    for(int i=0; i<active_task_count; i++){
-        energy_prediction[i] = active_task_array[i]->e_wc + RESTORE_OVERHEAD*active_task_array[i]->in_set_count;
-        max_energy_prediction = MAX(max_energy_prediction, energy_prediction[i]);
-    }
-    set_threshold(max_energy_prediction + AVG_OVERHEAD);
     return;
 }
 
 void increase_threshold(){
-    siren_command("INCREASE_THRESHOLD:\n");
     return;
 }
 
 void manage_underperf(){
     char found = 0;
     for(int i=0; i<active_app_count && !found; i++){
-        siren_command("PRINTF: in ciclo UNDERPERf\n");
         if(active_app_array[i]->x_ok[active_app_array[i]->x_okVersion] == -1){ //underperforming
-            siren_command("PRINTF: in if UNDERPERf\n");
-
             found = 1;
-            if(i<(active_app_count-1)){ //not the last app
+            if(i!=active_app_count){ //there are other active apps beside me
                 remove_last_app();
                 prune_tasks();
                 reset_threshold();
@@ -411,6 +274,10 @@ void manage_underperf(){
 }
 
 void activate_new_app(){
+    if(active_app_count==1){
+        siren_command("PRINTF: just one app...\n");
+        return;
+    }
     app_struct_t *app = app_array[active_app_count]; //activate first not active app
     short int appVersion = app->isActiveVersion;
     app->isActive[!appVersion & 0x1] |= 0x1;
@@ -501,14 +368,20 @@ int main(){
             version = enabled_task_array[i]->deadlineVersion;
             enabled_task_array[i]->deadline[!version & 0x1] -= tardis_time;
             enabled_task_array[i]->deadlineVersion = !version & 0x1;
-
         }
     }
 
+    // just to limit the exec time
+    if(resets==10){
+        siren_command("PRINTF: done, restarted %u\r\n", resets);
+        return 0;
+    }
     siren_command("GET_CCOUNT: main-%l\n", &delta_cycles);
     siren_command("TEST_EXECUTION_CCOUNT: %l, main\n", delta_cycles);
 
     scheduler();
     return 0;
 }
+
+
 

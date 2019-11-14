@@ -3,18 +3,19 @@ TASKS:
       in_set: []
       output:
           name: sense_out
-          type: acc_struct_t
+          type: acc_struct_t 30
+      mids: 20
       e_bc: 20
       e_wc: 80
     - id: lowpass
       in_set:
           - task_id: sense
-            dependency_type: simple
+            dependency_type: w10
       output:
           name: lowpass_out
           type: acc_struct_t*
       e_bc: 15
-      e_wc: 25
+      e_wc: 50
     - id: median
       in_set:
           - task_id: lowpass
@@ -23,7 +24,7 @@ TASKS:
           name: median_out
           type: acc_struct_t*
       e_bc: 15
-      e_wc: 25
+      e_wc: 32
     - id: classify
       in_set:
           - task_id: median
@@ -54,12 +55,12 @@ TASKS:
     - id: send
       in_set:
           - task_id: compress
-            dependency_type: simple
+            dependency_type: 1r
       output:
           name: send_out
           type: int
       e_bc: 15
-      e_wc: 50
+      e_wc: 90
 
 APPLICATIONS:
     - id: app_1

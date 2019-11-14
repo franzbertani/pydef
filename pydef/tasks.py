@@ -5,7 +5,7 @@ import networkx as nx
 from headergen import Header
 
 Variable = namedtuple("Variable", "name type")
-Dependency = namedtuple("Dependency", "task_id dependency_type")
+Dependency = namedtuple("Dependency", "task_id dependency_type condition")
 Task = namedtuple("Task", "id in_set output e_bc e_wc apps")
 
 variable_struct_template = "templates/variable_struct_template.c"
@@ -77,6 +77,12 @@ class Tasks:
                     return False
         return True
 
+    def get_task_condition(self, in_task, dep_type):
+        if(dep_type.startswith("w")): #TODO fix with a regex
+            return "var_struct_%s.write_count >= %s" %(in_task,dep_type.split("w")[1])
+        else:
+            return "1"
+
     def build_tasks_dict(self, config_dict):
         """It creates the task dictionary from the config dictionary
 
@@ -94,7 +100,13 @@ class Tasks:
                     apps_list.append(app["id"])
             new_task = Task(
                 id=task["id"],
-                in_set=[Dependency(**dep) for dep in task["in_set"]],
+                in_set=[Dependency(
+                    task_id=dep["task_id"],
+                    dependency_type=["dependency_type"],
+                    condition=self.get_task_condition(
+                        dep["task_id"],
+                        dep["dependency_type"])
+                    ) for dep in task["in_set"]],
                 output=Variable(**task["output"]),
                 e_bc=int(task["e_bc"]),
                 e_wc=int(task["e_wc"]),
@@ -115,6 +127,10 @@ class Tasks:
             self.tasks_graph.add_edges_from(
                 [(dep.task_id, task_id) for dep in task_props.in_set])
 
+    def add_tasks_signatures(self, header):
+        for task_id in self.tasks_dict:
+            header.add_line("void %s();" %(task_id,))
+
     def add_tasks_variables_declarations(self, header):
         """Generates the header define to declare tasks variables
 
@@ -129,10 +145,11 @@ class Tasks:
         with open(variable_struct_template, "r") as template_file:
             var_template = template_file.read().replace("\n", "\t\\\n\t")
         for task_id, task_props in self.tasks_dict.items():
+            versions_count = task_props.output.type.split(" ")[1] if(len(task_props.output.type.split(" ")) > 1) else "1"
             task_struct = (var_template
                            .replace("TASK", task_id)
-                           .replace("TYPE", task_props.output.type)
-                           .replace("VERSIONS_COUNT", "1"))
+                           .replace("TYPE", task_props.output.type.split(" ")[0])
+                           .replace("VERSIONS_COUNT", versions_count))
             header.add_define((task_id + "_output_var", task_struct))
             declarations_list.append(task_id + "_output_var")
         header.add_define(("DECLARE_OUTPUT_VARIABLES",
@@ -155,7 +172,7 @@ class Tasks:
             for dep in self.tasks_dict[task].in_set:
                 define_value.append(
                     header.get_var_declaration_string(
-                        self.tasks_dict[dep.task_id].output.type,
+                        self.tasks_dict[dep.task_id].output.type.split(" ")[0],
                         dep.task_id,
                         "g_%s" % (dep.task_id)))
             define_value.append(
@@ -280,12 +297,15 @@ class Tasks:
 
         for child_name in successors:
             # enable tasks
+            condition_string = [dep.condition for dep in self.tasks_dict[child_name].in_set if dep.task_id==father_task_id][0]
             task_enabler_string = template.replace(
                 "TASK_NAME", "task_struct_%s" % (child_name))
             app_struct_list = ["app_struct_%s.isActive[app_struct_%s.isActiveVersion]" % (app_name, app_name)
                                for app_name in self.tasks_dict[child_name].apps]
             task_enabler_string = task_enabler_string.replace(
                 "APP_CONDITION", " || ".join(app_struct_list))
+            task_enabler_string = task_enabler_string.replace(
+                "DEP_COND", condition_string)
 
             # set deadlines for newly enabled tasks
             task_enabler_string = task_enabler_string.replace(
@@ -429,6 +449,7 @@ class Tasks:
             an Header object
         """
         self.add_tasks_variables_declarations(header)
+        self.add_tasks_signatures(header)
         self.add_extern_variables(header)
         self.add_tasks_begin_declarations(header)
         self.add_tasks_returns(header)
