@@ -7,27 +7,36 @@ TASKS:
       mids: 20
       e_bc: 20
       e_wc: 80
-    - id: lowpass
+    - id: median
       in_set:
           - task_id: sense
             dependency_type: w10
+      output:
+        name: median_out
+        type: acc_struct_t*
+      e_bc: 15
+      e_wc: 32
+    - id: lowpass
+      in_set:
+          - task_id: median
+            dependency_type: simple
       output:
           name: lowpass_out
           type: acc_struct_t*
       e_bc: 15
       e_wc: 50
-    - id: median
+    - id: magnitude
       in_set:
           - task_id: lowpass
             dependency_type: simple
       output:
-          name: median_out
+          name: magnitude_out
           type: acc_struct_t*
       e_bc: 15
-      e_wc: 32
+      e_wc: 15
     - id: classify
       in_set:
-          - task_id: median
+          - task_id: magnitude
             dependency_type: simple
       output:
           name: classify_out
@@ -64,7 +73,7 @@ TASKS:
 
 APPLICATIONS:
     - id: app_1
-      tasks: [sense, lowpass, median, classify, operate]
+      tasks: [sense, median, lowpass, magnitude, classify, operate]
       initial_task: sense
       final_task: operate
       x_min: 3

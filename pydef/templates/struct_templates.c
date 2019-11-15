@@ -14,7 +14,7 @@ typedef struct task_struct {
 } task_struct_t;
 
 typedef struct app_struct {
-    task_struct_t* app_tasks[5];
+    task_struct_t* app_tasks[6];
     task_struct_t* initial_task;
     task_struct_t* final_task;
     int tasks_count;
