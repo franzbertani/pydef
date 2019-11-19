@@ -32,6 +32,8 @@ class Tasks:
 
     def set_apps_dict(self, apps_dict):
         self.apps_dict = apps_dict
+        self.sorted_app_id_list = [x[0] for x in sorted(self.apps_dict.items(), key=lambda x: x[1].x_min, reverse=False)]
+
 
     def check_task_consistency(self, new_task):
         """Check if the new task is compatible with the existing ones.
@@ -323,6 +325,13 @@ class Tasks:
                 "ORIGINAL_DEADLINE", str(self.apps_dict[app_id].x_min))
             template = template.replace("TASK_ID", task_id)
             template = template.replace("APP_ID", app_id)
+            if(app_id == self.sorted_app_id_list[0]): #I'm the final task of the first app
+                #in that case I set the slack to the time left to my deadline and
+                #I set the app to run to the next app (if it exists).
+                template = template.replace("SLACK_UPDATE", "slack=value; if(selected_app==0 && selected_app<APPS_COUNT)selected_app++;")
+            else:
+                #otherwise I have nothing to do with the slack
+                template = template.replace("SLACK_UPDATE", " ")
         return template
 
     def add_tasks_returns(self, header):
@@ -364,6 +373,15 @@ class Tasks:
 
             # children deadline is update thanks to the add_tasks_enabler_function
             define_value += self.add_tasks_enabler_function(task_id)
+
+            # if I'm not the first app, then I'm running inside a slack,
+            # therefore I have to subtrack delta_cycles to the current slack
+            # to account for my execution.
+            if(self.sorted_app_id_list.index(task_props.apps[0])>0): #TODO currently not working with shared tasks
+                define_value = define_value.replace("SLACK_SUB", "slack-=delta_cycles;")
+            else:
+                define_value = define_value.replace("SLACK_SUB", " ")
+
             header.add_define((define_key, define_value))
 
     def add_tasks_structs(self, header):

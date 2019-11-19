@@ -54,7 +54,7 @@ TASKS:
       e_wc: 30
     - id: compress
       in_set:
-          - task_id: median
+          - task_id: lowpass
             dependency_type: simple
       output:
           name: compress_out

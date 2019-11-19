@@ -1,5 +1,5 @@
 typedef struct task_struct {
-    unsigned int e_wc;
+    long int e_wc;
     struct task_struct* in_set[3];
     int in_set_count;
     long int deadline[2];
@@ -11,6 +11,7 @@ typedef struct task_struct {
     short int isActiveVersion;
     short int marked_to_remove[2];
     short int stopped;
+    void* app_pointer;
 } task_struct_t;
 
 typedef struct app_struct {

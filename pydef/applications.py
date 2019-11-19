@@ -133,6 +133,15 @@ class Applications:
                 "FINAL_TASK", "&task_struct_%s" % (v.get_final_task(),))
             structs.append(app_define)
         define_string = "\t\\\n\t".join(structs)
+        #setting pointers to app in tasks_structs
+        task_pointers = []
+        for k,v in self.apps_dict.items():
+            for task in v.tasks_dict:
+                task_pointers.append("task_struct_%s.app_pointer = (void*) &(app_struct_%s);" %(task, k))
+        function_string = "\t\\\n\tvoid set_tasks_app_pointers(){"
+        function_string += "\t\\\n\t".join(task_pointers)
+        function_string += "};"
+        define_string += function_string
         header.add_define(("APP_STRUCTS", define_string))
 
     def add_apps_array(self, header):

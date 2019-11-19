@@ -15,7 +15,4 @@ if(var_struct_TASK.write_count < var_struct_TASK.versions_count){
 
 siren_command("GET_CCOUNT: task-%l\n", &delta_cycles);
 siren_command("TEST_EXECUTION_CCOUNT: %l, TASK\n", delta_cycles);
-
-/* siren_command("PRINTF: var_struct_TASK :\r\n"); */
-/* for(int i=0; i<var_struct_TASK.versions_count; i++) */
-/*     siren_command("PRINTF: %u\r\n", var_struct_TASK.version_array[(var_struct_TASK.window_begin_index + i) % (var_struct_TASK.versions_count + 1)]); */
+SLACK_SUB

@@ -20,12 +20,14 @@ int __attribute__ ((persistent)) resets = -1;
 int __attribute__ ((persistent)) seen_resets = 0;
 int __attribute__ ((persistent)) next_task = 0;
 long int __attribute__ ((persistent)) tardis_time = 0;
-unsigned long int __attribute__ ((persistent)) delta_cycles = 0;
-unsigned long int __attribute__ ((persistent)) frequency = 0;
-unsigned long int __attribute__ ((persistent)) exec_depth_x100 = 0;
-unsigned int __attribute__ ((persistent)) voltageX100 = 0;
-short int __attribute__ ((persistent)) is_pruning = 0;
-short int __attribute__ ((persistent)) isSenseEnabled = 1;
+long int __attribute__ ((persistent)) delta_cycles = 0;
+long int __attribute__ ((persistent)) frequency = 0;
+long int __attribute__ ((persistent)) exec_depth_x100 = 0;
+long int __attribute__ ((persistent)) voltageX100 = 0;
+long int __attribute__ ((persistent)) is_pruning = 0;
+long int __attribute__ ((persistent)) isSenseEnabled = 1;
+long int __attribute__ ((persistent)) slack = 0;
+short int selected_app = 0;
 
 
 void activate_new_app();
@@ -100,6 +102,7 @@ TASK_ARRAY
 APP_STRUCTS
 APP_ARRAY
 
+
 int check_if_new(task_struct_t *task){
     for(int i=0; i<active_task_count; i++){
         if(active_task_array[i] == task)
@@ -123,6 +126,7 @@ void initialize(){
     siren_command("PRINTF: initialize after first boot\n");
     siren_command("SET_TARDIS_VARIABLE: %u\n", &tardis_time);
 
+    set_tasks_app_pointers(); 
     /* activate first app and its tasks L:4-5 */
     app_struct_t *app = app_array[active_app_count];
     short int version = app->isActiveVersion;
@@ -244,28 +248,75 @@ void scheduler(){
         siren_command("PRINTF: operate[%l,%l] version=%u\n", task_struct_operate.deadline[0],task_struct_operate.deadline[1], task_struct_operate.deadlineVersion);
         siren_command("PRINTF: compress[%l,%l] version=%u\n", task_struct_compress.deadline[0],task_struct_compress.deadline[1], task_struct_compress.deadlineVersion);
         siren_command("PRINTF: send[%l,%l] version=%u\n", task_struct_send.deadline[0],task_struct_send.deadline[1], task_struct_send.deadlineVersion);
-        siren_command("PRINTF: selected task deadline %l\n", enabled_task_array[0]->deadline[enabled_task_array[0]->deadlineVersion]);
 #endif
 
-        //select and exec task with lowest deadline that fits the exec depth
-        int selection = 0;
         unsigned long int exec_depth = get_exec_depth_x100();
+#if DEBUG
+        siren_command("PRINTF: current slack = %l\n", slack);
+#endif
 
-        while(selection < enabled_task_count && (enabled_task_array[selection]->stopped == 1 || exec_depth<=(enabled_task_array[selection]->e_wc) * 10)){ //e_wc is 10^3cycles, exec_depth is 10^2cycles
-            if(enabled_task_array[selection]->stopped == 1)
-                siren_command("PRINTF: skipping task %u, misd condition not satisfied\n", selection);
-            else
-                siren_command("PRINTF: skipping task %u, does not fit current energy budget\n", selection);
-            selection++;
+        /*TASK SELECTION:
+         * While there are other tasks to check,
+         * we skip to the next one if either one of these conditions holds:
+         *  - is not from the selected_app;
+         *  - or it's stopped (misd conditions);
+         *  - or it does not fit the current exec_depth;
+         *  - or we are in running in a slack, but we don't fit the slack.
+         *
+         * If none of the previous conditions force us to skip task,
+         * we break from both the while and we have the task in selection.
+         * Otherwise if we reach the end of tasks array without a valid task,
+         * we try looking for a task in the previous app.
+         * If we are over of apps, with no selected task then we sleep for 1ms.
+         */
+        int selection = 0;
+        while(selected_app>=0){
+            short int found=0;
+            while(selection < enabled_task_count && !found){ 
+                if( enabled_task_array[selection]->app_pointer != app_array[selected_app] ){
+#if DEBUG
+                    siren_command("PRINTF: skipping task %u, not in selected app %u\n", selection, selected_app);
+#endif
+                    selection++;
+                } else if(enabled_task_array[selection]->stopped == 1){
+#if DEBUG
+                    siren_command("PRINTF: skipping task %u, misd condition not satisfied\n", selection);
+#endif
+                    selection++;
+                } else if(exec_depth<=(enabled_task_array[selection]->e_wc) * 10 ){//e_wc is 10^3cycles, exec_depth is 10^2cycles
+#if DEBUG
+                    siren_command("PRINTF: skipping task %u, does not fit current energy budget\n", selection);
+#endif
+                    selection++;
+                } else if(selected_app>0 && enabled_task_array[selection]->e_wc*1000>slack){
+#if DEBUG
+                    siren_command("PRINTF: skipping task %u, does not fit current slack %l\n", selection, slack);
+#endif
+                    selection++;
+                } else {
+                    found = 1;
+                }
+            }
+            if(found)
+                break;
+            selected_app--;
+            selection = 0;
         }
 
-        if(selection==enabled_task_count) {
+        //fixing selected_app, there must be a nicer solution...
+        if(selected_app==-1)selected_app=0;
+#if DEBUG
+        siren_command("PRINTF: selected app %u\n", selected_app);
+#endif
+
+        if(selection==enabled_task_count) { //no feasible task selection
             siren_command("PRINTF: no task is currently available, sleeping for 1ms\n");
             siren_command("SLEEP_FOR_TIME: 1000\n"); //1ms
             for(short int i=0; i<enabled_task_count; i++){
                 enabled_task_array[i]->deadline[enabled_task_array[i]->deadlineVersion]-=1000;
+                slack-=1000;
             }
-        } else {
+        } else { //run selected task
             next_task_struct = *(enabled_task_array[selection]);
             if(next_task_struct.function_pointer == task_struct_sense.function_pointer ){
                 task_struct_sense.stopped = 1;
@@ -273,9 +324,11 @@ void scheduler(){
             siren_command("GET_CCOUNT: scheduler-%l\n", &delta_cycles);
             siren_command("TEST_EXECUTION_CCOUNT: %l, schedule\n", delta_cycles);
 
-            (next_task_struct.function_pointer)();
+            siren_command("PRINTF: selected task ewc = %l, slack = %l\n", next_task_struct.e_wc, slack);
+            (next_task_struct.function_pointer)(); //run
 
             if(next_task_struct.function_pointer == task_struct_sense.function_pointer){
+                //hack to prevent deadline restore while sense window is not over.
                 if(var_struct_sense.write_count<10){
                     version = task_struct_sense.deadlineVersion;
                     task_struct_sense.deadline[version]=task_struct_sense.deadline[ ( !version ) &0x1];
@@ -287,16 +340,30 @@ void scheduler(){
             }
 
 #if DEBUG
-            siren_command("PRINTF: delta_cycles = %l\n", delta_cycles);
-            siren_command("PRINTF: enabled_tasks %u\n", enabled_task_count);
-            siren_command("PRINTF: active apps %u\n", active_app_count);
+            siren_command("PRINTF: enabled tasks =  %u\n", enabled_task_count);
+            siren_command("PRINTF: active apps = %u\n", active_app_count);
 #endif
-            //subtract to all deadlines tasks exec time
-            for(int i=0; i<enabled_task_count; i++){
-                /* if(i==selection) continue; */
-                version = enabled_task_array[i]->deadlineVersion;
-                enabled_task_array[i]->deadline[ ( !version ) & 0x1] = enabled_task_array[i]->deadline[version] - delta_cycles; //freq @ 1Mhz and deadline in microsec => cycles = microsec
-                enabled_task_array[i]->deadlineVersion = ( !version ) & 0x1;
+            /* The execution of an app 0 task affects all the deadlines,
+             * on the contrary the execution of an app>0 must be subtracted
+             * only to other apps that run in the slack.
+             */
+            if(next_task_struct.app_pointer==active_app_array[0]){
+                for(int i=0; i<enabled_task_count; i++){
+                    /* if(i==selection) continue; */
+                    version = enabled_task_array[i]->deadlineVersion;
+                    siren_command("PRINTF: subtracting %l cycles from task %u\n", delta_cycles, i);
+                    siren_command("PRINTF: deadline from %l to %l\n",enabled_task_array[i]->deadline[version], enabled_task_array[i]->deadline[version]- delta_cycles);
+                    enabled_task_array[i]->deadline[ ( !version ) & 0x1] = enabled_task_array[i]->deadline[version] - delta_cycles; //freq @ 1Mhz and deadline in microsec => cycles = microsec
+                    enabled_task_array[i]->deadlineVersion = ( !version ) & 0x1;
+                }
+            } else{
+                for(int i=0; i<enabled_task_count; i++){
+                    if(enabled_task_array[i]->app_pointer != active_app_array[0]){
+                        version = enabled_task_array[i]->deadlineVersion;
+                        enabled_task_array[i]->deadline[ ( !version ) & 0x1] = enabled_task_array[i]->deadline[version] - delta_cycles; //freq @ 1Mhz and deadline in microsec => cycles = microsec
+                        enabled_task_array[i]->deadlineVersion = ( !version ) & 0x1;
+                    }
+                }
             }
         }
     }
@@ -406,6 +473,8 @@ void increase_threshold(){
     return;
 }
 
+//should be generated by the preprocessor
+//this approach replaces task pruning since it's more efficient.
 void deactivate_2(){
 
     short int appVersion = app_struct_app_2.isActiveVersion;
@@ -463,7 +532,6 @@ void deactivate_2(){
 }
 
 void manage_underperf(){
-    siren_command("START_CCOUNT: underperf\n");
     char found = 0;
 
     if(app_struct_app_1.x_ok[app_struct_app_1.x_okVersion]==-1){
@@ -478,8 +546,6 @@ void manage_underperf(){
     } else if(app_struct_app_2.x_ok[app_struct_app_2.x_okVersion]==-1){
         increase_threshold();
     }
-    siren_command("GET_CCOUNT: underperf-%u\n", &delta_cycles);
-    siren_command("TEST_EXECUTION_CCOUNT: %u, underperf management\n", delta_cycles);
 
     /* for(int i=0; i<active_app_count && !found; i++){ */
     /*     if(active_app_array[i]->x_ok[active_app_array[i]->x_okVersion] == -1){ //underperforming */
@@ -582,6 +648,7 @@ int main(){
     siren_command("GET_FREQ: %u\n", &frequency);
     siren_command("PRINTF: running @ %l Hz\n", frequency);
     WDTCTL = WDTPW | WDTHOLD;
+    slack=0;
 
     resets++;
     if(resets==0){
@@ -596,6 +663,7 @@ int main(){
             enabled_task_array[i]->deadlineVersion = ( !version ) & 0x1;
 
         }
+        slack-=tardis_time;
     }
 
     siren_command("GET_CCOUNT: main-%l\n", &delta_cycles);
