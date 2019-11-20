@@ -38,6 +38,7 @@ void set_threshold(int);
 unsigned long int get_exec_depth_x100();
 void initialize();
 void prune_tasks();
+void subtract_cycles_from_all();
 
 BEGIN_TASK_sense
     siren_command("PRINTF: running SENSE\n");
@@ -72,7 +73,7 @@ END_TASK
 BEGIN_TASK_classify
     siren_command("PRINTF: running CLASSIFY\n");
     int classify_out;
-    __delay_cycles(40000);
+    __delay_cycles(15000);
     RETURN_classify
 END_TASK
 
@@ -86,7 +87,7 @@ END_TASK
 BEGIN_TASK_compress
     siren_command("PRINTF: running COMPRESS\n");
     int compress_out;
-    __delay_cycles(40000);
+    __delay_cycles(20000);
     RETURN_compress
 END_TASK
 
@@ -102,6 +103,14 @@ TASK_ARRAY
 APP_STRUCTS
 APP_ARRAY
 
+
+void subtract_cycles_from_all(){
+    for(short int i=0, version; i<enabled_task_count; i++){
+        version = enabled_task_array[i]->deadlineVersion;
+        enabled_task_array[i]->deadline[ ( !version ) & 0x1] = enabled_task_array[i]->deadline[version] - delta_cycles; //freq @ 1Mhz and deadline in microsec => cycles = microsec
+        enabled_task_array[i]->deadlineVersion = ( !version ) & 0x1;
+    }
+}
 
 int check_if_new(task_struct_t *task){
     for(int i=0; i<active_task_count; i++){
@@ -215,10 +224,10 @@ void scheduler(){
 
     siren_command("GET_CCOUNT: scheduler-%l\n", &delta_cycles);
     siren_command("TEST_EXECUTION_CCOUNT: %l, scheduler restore\n", delta_cycles);
+    subtract_cycles_from_all();
 
     short int version;
     while(1){
-        siren_command("START_CCOUNT: scheduler\n");
 
         //just for the eval example
         siren_command("GET_TIME: misd(SENSE)-%u\n", &isSenseEnabled);
@@ -238,6 +247,7 @@ void scheduler(){
 
         //sort array of enabled tasks based on deadlines, probably a rb tree is better
         heapsort(enabled_task_array, enabled_task_count);
+        siren_command("START_CCOUNT: scheduler\n");
 
 #if DEBUG
         siren_command("PRINTF: sense[%l,%l] version=%u\n", task_struct_sense.deadline[0],task_struct_sense.deadline[1], task_struct_sense.deadlineVersion);
@@ -323,6 +333,7 @@ void scheduler(){
             }
             siren_command("GET_CCOUNT: scheduler-%l\n", &delta_cycles);
             siren_command("TEST_EXECUTION_CCOUNT: %l, schedule\n", delta_cycles);
+            subtract_cycles_from_all();
 
             siren_command("PRINTF: selected task ewc = %l, slack = %l\n", next_task_struct.e_wc, slack);
             (next_task_struct.function_pointer)(); //run
@@ -347,23 +358,25 @@ void scheduler(){
              * on the contrary the execution of an app>0 must be subtracted
              * only to other apps that run in the slack.
              */
-            if(next_task_struct.app_pointer==active_app_array[0]){
-                for(int i=0; i<enabled_task_count; i++){
-                    /* if(i==selection) continue; */
-                    version = enabled_task_array[i]->deadlineVersion;
-                    siren_command("PRINTF: subtracting %l cycles from task %u\n", delta_cycles, i);
-                    siren_command("PRINTF: deadline from %l to %l\n",enabled_task_array[i]->deadline[version], enabled_task_array[i]->deadline[version]- delta_cycles);
-                    enabled_task_array[i]->deadline[ ( !version ) & 0x1] = enabled_task_array[i]->deadline[version] - delta_cycles; //freq @ 1Mhz and deadline in microsec => cycles = microsec
-                    enabled_task_array[i]->deadlineVersion = ( !version ) & 0x1;
-                }
-            } else{
-                for(int i=0; i<enabled_task_count; i++){
-                    if(enabled_task_array[i]->app_pointer != active_app_array[0]){
-                        version = enabled_task_array[i]->deadlineVersion;
-                        enabled_task_array[i]->deadline[ ( !version ) & 0x1] = enabled_task_array[i]->deadline[version] - delta_cycles; //freq @ 1Mhz and deadline in microsec => cycles = microsec
-                        enabled_task_array[i]->deadlineVersion = ( !version ) & 0x1;
-                    }
-                }
+            /* if(next_task_struct.app_pointer==active_app_array[0]){ */
+            /*     for(int i=0; i<enabled_task_count; i++){ */
+            /*         version = enabled_task_array[i]->deadlineVersion; */
+            /*         enabled_task_array[i]->deadline[ ( !version ) & 0x1] = enabled_task_array[i]->deadline[version] - delta_cycles; //freq @ 1Mhz and deadline in microsec => cycles = microsec */
+            /*         enabled_task_array[i]->deadlineVersion = ( !version ) & 0x1; */
+            /*     } */
+            /* } else{ */
+            /*     for(int i=0; i<enabled_task_count; i++){ */
+            /*         if(enabled_task_array[i]->app_pointer != active_app_array[0]){ */
+            /*             version = enabled_task_array[i]->deadlineVersion; */
+            /*             enabled_task_array[i]->deadline[ ( !version ) & 0x1] = enabled_task_array[i]->deadline[version] - delta_cycles; //freq @ 1Mhz and deadline in microsec => cycles = microsec */
+            /*             enabled_task_array[i]->deadlineVersion = ( !version ) & 0x1; */
+            /*         } */
+            /*     } */
+            /* } */
+            for(int i=0; i<enabled_task_count; i++){
+                version = enabled_task_array[i]->deadlineVersion;
+                enabled_task_array[i]->deadline[ ( !version ) & 0x1] = enabled_task_array[i]->deadline[version] - delta_cycles; //freq @ 1Mhz and deadline in microsec => cycles = microsec
+                enabled_task_array[i]->deadlineVersion = ( !version ) & 0x1;
             }
         }
     }
@@ -668,6 +681,7 @@ int main(){
 
     siren_command("GET_CCOUNT: main-%l\n", &delta_cycles);
     siren_command("TEST_EXECUTION_CCOUNT: %l, main\n", delta_cycles);
+    subtract_cycles_from_all();
 
     scheduler();
     return 0;

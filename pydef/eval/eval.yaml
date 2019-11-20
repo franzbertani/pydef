@@ -6,7 +6,7 @@ TASKS:
           type: acc_struct_t 30
       mids: 20
       e_bc: 20
-      e_wc: 80
+      e_wc: 81
     - id: median
       in_set:
           - task_id: sense
@@ -15,7 +15,7 @@ TASKS:
         name: median_out
         type: acc_struct_t*
       e_bc: 15
-      e_wc: 32
+      e_wc: 33
     - id: lowpass
       in_set:
           - task_id: median
@@ -24,7 +24,7 @@ TASKS:
           name: lowpass_out
           type: acc_struct_t*
       e_bc: 15
-      e_wc: 50
+      e_wc: 51
     - id: magnitude
       in_set:
           - task_id: lowpass
@@ -33,7 +33,7 @@ TASKS:
           name: magnitude_out
           type: acc_struct_t*
       e_bc: 15
-      e_wc: 15
+      e_wc: 16
     - id: classify
       in_set:
           - task_id: magnitude
@@ -42,7 +42,7 @@ TASKS:
           name: classify_out
           type: int
       e_bc: 15
-      e_wc: 40
+      e_wc: 16
     - id: operate
       in_set:
           - task_id: classify
@@ -51,7 +51,7 @@ TASKS:
           name: operate_out
           type: int
       e_bc: 15
-      e_wc: 30
+      e_wc: 31
     - id: compress
       in_set:
           - task_id: lowpass
@@ -60,7 +60,7 @@ TASKS:
           name: compress_out
           type: acc_struct_t*
       e_bc: 15
-      e_wc: 40
+      e_wc: 21
     - id: send
       in_set:
           - task_id: compress
@@ -69,7 +69,7 @@ TASKS:
           name: send_out
           type: int
       e_bc: 15
-      e_wc: 90
+      e_wc: 91
 
 APPLICATIONS:
     - id: app_1
