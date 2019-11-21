@@ -110,6 +110,8 @@ void subtract_cycles_from_all(){
         enabled_task_array[i]->deadline[ ( !version ) & 0x1] = enabled_task_array[i]->deadline[version] - delta_cycles; //freq @ 1Mhz and deadline in microsec => cycles = microsec
         enabled_task_array[i]->deadlineVersion = ( !version ) & 0x1;
     }
+    if(selected_app>0)
+        slack-=delta_cycles;
 }
 
 int check_if_new(task_struct_t *task){
@@ -132,7 +134,7 @@ unsigned long int get_exec_depth_x100(){
 }
 
 void initialize(){
-    siren_command("PRINTF: initialize after first boot\n");
+    siren_command("PRINTF: initializing board after first boot.\n");
     siren_command("SET_TARDIS_VARIABLE: %u\n", &tardis_time);
 
     set_tasks_app_pointers(); 
@@ -214,7 +216,7 @@ void scheduler(){
         if(next_task == 1){
 
 #if DEBUG
-            siren_command("PRINTF: restore\n");
+            siren_command("PRINTF: restoring after power failure.\n");
 #endif
 
             if(is_pruning) prune_tasks();
@@ -229,23 +231,19 @@ void scheduler(){
     short int version;
     while(1){
 
-        //just for the eval example
+        /* Just for the eval example*/
         siren_command("GET_TIME: misd(SENSE)-%u\n", &isSenseEnabled);
 
-#if DEBUG
-        siren_command("PRINTF: SENSE enabled? %u\n", isSenseEnabled);
-#endif
-
+        /* Re enabling SENSE if misd satisfied. */
         if(isSenseEnabled){ //50Hz set in SIREN
-
-#if DEBUG
-            siren_command("PRINTF: SENSE re enabled\n");
-#endif
-
             task_struct_sense.stopped=0;
         }
 
-        //sort array of enabled tasks based on deadlines, probably a rb tree is better
+        /* Sort array of enabled tasks based on deadlines. 
+         * This thing has a termendous impact on scheduler performances
+         * and should really be replaced with something better
+         * with linked lists...
+         */
         heapsort(enabled_task_array, enabled_task_count);
         siren_command("START_CCOUNT: scheduler\n");
 
@@ -313,6 +311,10 @@ void scheduler(){
             selection = 0;
         }
 
+        siren_command("GET_CCOUNT: scheduler-%l\n", &delta_cycles);
+        siren_command("TEST_EXECUTION_CCOUNT: %l, schedule\n", delta_cycles);
+        subtract_cycles_from_all();
+
         //fixing selected_app, there must be a nicer solution...
         if(selected_app==-1)selected_app=0;
 #if DEBUG
@@ -331,9 +333,6 @@ void scheduler(){
             if(next_task_struct.function_pointer == task_struct_sense.function_pointer ){
                 task_struct_sense.stopped = 1;
             }
-            siren_command("GET_CCOUNT: scheduler-%l\n", &delta_cycles);
-            siren_command("TEST_EXECUTION_CCOUNT: %l, schedule\n", delta_cycles);
-            subtract_cycles_from_all();
 
             siren_command("PRINTF: selected task ewc = %l, slack = %l\n", next_task_struct.e_wc, slack);
             (next_task_struct.function_pointer)(); //run
@@ -373,6 +372,13 @@ void scheduler(){
             /*         } */
             /*     } */
             /* } */
+
+            /* ACTUALLY NO...
+             * Given how the slack is implemented we need to subtract
+             * delta_cycles to all the deadlines, no matter what app
+             * is running.
+             * Keeping the commented out lines just in case...
+             */
             for(int i=0; i<enabled_task_count; i++){
                 version = enabled_task_array[i]->deadlineVersion;
                 enabled_task_array[i]->deadline[ ( !version ) & 0x1] = enabled_task_array[i]->deadline[version] - delta_cycles; //freq @ 1Mhz and deadline in microsec => cycles = microsec
@@ -508,18 +514,26 @@ void deactivate_2(){
     active_task_array[send_index] = active_task_array[active_task_count-1];
     active_task_count--;
 
+    short int found_compress=0;
+    short int found_send=0;
     for(short int i=0; i<enabled_task_count; i++){
         if(enabled_task_array[i]==&task_struct_send){
             send_index = i;
+            found_send = 1;
         } else if(enabled_task_array[i]==&task_struct_compress){
             compress_index = i;
+            found_compress = 1;
         }
     }
-    enabled_task_array[compress_index] = enabled_task_array[active_task_count-1];
-    enabled_task_count--;
+    if(found_compress){
+        enabled_task_array[compress_index] = enabled_task_array[active_task_count-1];
+        enabled_task_count--;
+    }
 
-    enabled_task_array[send_index] = enabled_task_array[active_task_count-1];
-    enabled_task_count--;
+    if(found_send){
+        enabled_task_array[send_index] = enabled_task_array[active_task_count-1];
+        enabled_task_count--;
+    }
 
     //should use versioning
     task_struct_compress.deadline[0] = 0;
@@ -676,7 +690,8 @@ int main(){
             enabled_task_array[i]->deadlineVersion = ( !version ) & 0x1;
 
         }
-        slack-=tardis_time;
+        if(selected_app>0)
+            slack-=tardis_time;
     }
 
     siren_command("GET_CCOUNT: main-%l\n", &delta_cycles);

@@ -325,10 +325,16 @@ class Tasks:
                 "ORIGINAL_DEADLINE", str(self.apps_dict[app_id].x_min))
             template = template.replace("TASK_ID", task_id)
             template = template.replace("APP_ID", app_id)
-            if(app_id == self.sorted_app_id_list[0]): #I'm the final task of the first app
-                #in that case I set the slack to the time left to my deadline and
-                #I set the app to run to the next app (if it exists).
-                template = template.replace("SLACK_UPDATE", "slack=value; if(selected_app==0 && selected_app<APPS_COUNT)selected_app++;")
+            if(app_id == self.sorted_app_id_list[0]):
+                # I'm the final task of the first app
+                # in that case I set the slack to the time left to my deadline and
+                # I set the app to run to the next app (if it exists).
+                # Fulvio suggested to discount the old slack by a X parameter
+                # so that old power failures are less relevant.
+                # This parameter is somehow a measure of the energy source stability:
+                # an high value means that the source is subject to frequent drops,
+                # a low value means that the source is fairly stable.
+                template = template.replace("SLACK_UPDATE", "slack=0.3*slack + value; if(selected_app==0 && selected_app<APPS_COUNT)selected_app++;")
             else:
                 #otherwise I have nothing to do with the slack
                 template = template.replace("SLACK_UPDATE", " ")
