@@ -1,5 +1,7 @@
-SOURCES		=  eval.c sort.c $(SIREN_LIB)/printf.c
-OBJECTS		=  eval.o sort.o $(SIREN_LIB)/printf.o
+# SOURCES		=  eval.c sort.c $(SIREN_LIB)/printf.c
+# OBJECTS		=  eval.o sort.o $(SIREN_LIB)/printf.o
+SOURCES		=  static.c sort.c $(SIREN_LIB)/printf.c
+OBJECTS		=  static.o sort.o $(SIREN_LIB)/printf.o
 
 CC          = $(MSPGCC_ROOT)/msp430-elf-gcc
 DEVICE		= msp430fr6989
