@@ -85,5 +85,5 @@ if len(sys.argv)>=3:
     output_path = sys.argv[2]
 H.write_file(output_path)
 
-# nx.draw(T.get_tasks_graph(), with_labels=True)
-# plt.show()
+nx.draw(T.get_tasks_graph(), with_labels=True)
+plt.show()

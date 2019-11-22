@@ -329,12 +329,15 @@ class Tasks:
                 # I'm the final task of the first app
                 # in that case I set the slack to the time left to my deadline and
                 # I set the app to run to the next app (if it exists).
-                # Fulvio suggested to discount the old slack by a X parameter
+                # Fulvio suggested to discount the old slack by a discount parameter
                 # so that old power failures are less relevant.
+                # Discount parameter is a value in [0,1].
                 # This parameter is somehow a measure of the energy source stability:
                 # an high value means that the source is subject to frequent drops,
                 # a low value means that the source is fairly stable.
-                template = template.replace("SLACK_UPDATE", "slack=0.3*slack + value; if(selected_app==0 && selected_app<APPS_COUNT)selected_app++;")
+                discount_parameter = self.config_dict.get("discount_parameter", 1)
+                slack_update_instruction = "slack={}*slack + value;".format(discount_parameter)
+                template = template.replace("SLACK_UPDATE", slack_update_instruction)
             else:
                 #otherwise I have nothing to do with the slack
                 template = template.replace("SLACK_UPDATE", " ")

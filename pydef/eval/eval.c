@@ -27,7 +27,7 @@ long int __attribute__ ((persistent)) voltageX100 = 0;
 long int __attribute__ ((persistent)) is_pruning = 0;
 long int __attribute__ ((persistent)) isSenseEnabled = 1;
 long int __attribute__ ((persistent)) slack = 0;
-short int selected_app = 0;
+long int __attribute__ ((persistent)) selected_app = 0;
 
 
 void activate_new_app();
@@ -278,6 +278,7 @@ void scheduler(){
          * If we are over of apps, with no selected task then we sleep for 1ms.
          */
         int selection = 0;
+        siren_command("PRINTF: current selected app %u\n", selected_app);
         while(selected_app>=0){
             short int found=0;
             while(selection < enabled_task_count && !found){ 
@@ -526,12 +527,12 @@ void deactivate_2(){
         }
     }
     if(found_compress){
-        enabled_task_array[compress_index] = enabled_task_array[active_task_count-1];
+        enabled_task_array[compress_index] = enabled_task_array[enabled_task_count-1];
         enabled_task_count--;
     }
 
     if(found_send){
-        enabled_task_array[send_index] = enabled_task_array[active_task_count-1];
+        enabled_task_array[send_index] = enabled_task_array[enabled_task_count-1];
         enabled_task_count--;
     }
 
@@ -665,6 +666,7 @@ void manage_overperf(){
             found = 1;
             activate_new_app();
             siren_command("LOG_EVENT: app_2 ON\n");
+            reset_threshold();
         }
     }
     return;

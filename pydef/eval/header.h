@@ -340,8 +340,8 @@ void send();
 	 	\
 	long int value = task_struct_operate.deadline[task_struct_operate.deadlineVersion] - delta_cycles;	\
 		\
-	siren_command("PRINTF: updating tput aftrer operate, value=%l\n", value);	\
-	slack=0.3*slack + value; if(selected_app==0 && selected_app<APPS_COUNT)selected_app++;	\
+	siren_command("PRINTF: updating tput after operate, value=%l\n", value);	\
+	slack=0.3*slack + value;	\
 		\
 	if (value < 0 || slack < 0){	\
 	    siren_command("PRINTF: app_1 underperforming\n");	\
@@ -352,6 +352,7 @@ void send();
 	    siren_command("PRINTF: app_1 overperforming\n");	\
 	    app_struct_app_1.x_ok[!app_struct_app_1.x_okVersion & 0x1] = 1;	\
 	    app_struct_app_1.x_okVersion = !app_struct_app_1.x_okVersion & 0x1;	\
+	    if(selected_app==0 && selected_app<APPS_COUNT) selected_app++;	\
 	    manage_overperf();	\
 	} else {	\
 	    siren_command("PRINTF: app_1 performance ok\n");	\
@@ -407,7 +408,7 @@ void send();
 	slack-=delta_cycles;	\
 	long int value = task_struct_send.deadline[task_struct_send.deadlineVersion] - delta_cycles;	\
 		\
-	siren_command("PRINTF: updating tput aftrer send, value=%l\n", value);	\
+	siren_command("PRINTF: updating tput after send, value=%l\n", value);	\
 	 	\
 		\
 	if (value < 0 || slack < 0){	\
@@ -419,6 +420,7 @@ void send();
 	    siren_command("PRINTF: app_2 overperforming\n");	\
 	    app_struct_app_2.x_ok[!app_struct_app_2.x_okVersion & 0x1] = 1;	\
 	    app_struct_app_2.x_okVersion = !app_struct_app_2.x_okVersion & 0x1;	\
+	    if(selected_app==0 && selected_app<APPS_COUNT) selected_app++;	\
 	    manage_overperf();	\
 	} else {	\
 	    siren_command("PRINTF: app_2 performance ok\n");	\

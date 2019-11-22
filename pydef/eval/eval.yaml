@@ -86,3 +86,4 @@ APPLICATIONS:
 HEADER PREFIX:
     - path: "eval/acc_struct_t.h"
 
+discount_parameter: 0.3
