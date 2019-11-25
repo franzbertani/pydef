@@ -46,9 +46,12 @@ task_struct_t* __attribute ((persistent)) ordered_tasks_array[20] = {
     &task_struct_lowpass,
     &task_struct_magnitude,
     &task_struct_classify,
-    &task_struct_operate ,
+    &task_struct_operate,
     &task_struct_compress,
-    &task_struct_send };
+    &task_struct_send};
+long int __attribute__ ((persistent)) over_counter[2] = {0,0};
+long int __attribute__ ((persistent)) under_counter[2] = {0,0};
+
 
 
 void activate_new_app();
@@ -115,7 +118,7 @@ END_TASK
 BEGIN_TASK_send
     siren_command("PRINTF: running SEND\n");
     int send_out;
-    __delay_cycles(90000);
+    __delay_cycles(300000);
     RETURN_send
 END_TASK
 
@@ -187,7 +190,6 @@ void scheduler(){
 
         /* Just for the eval example*/
         siren_command("GET_TIME: misd(SENSE)-%u\n", &isSenseEnabled);
-        siren_command("START_CCOUNT: scheduler\n");
 
         /* Re enabling SENSE if misd satisfied. */
         if(isSenseEnabled){ //50Hz set in SIREN
@@ -198,6 +200,7 @@ void scheduler(){
             siren_command("SLEEP_FOR_TIME: 1000\n");
         } else {
             (next_task_struct.function_pointer)(); //run
+            siren_command("START_CCOUNT: scheduler\n");
             if(next_task_struct.function_pointer == task_struct_sense.function_pointer ){
                 task_struct_sense.stopped = 1;
             }
@@ -207,9 +210,9 @@ void scheduler(){
                 siren_command("LOG_EVENT: app_2 done\n");
             }
             next_task = (next_task+1)%20;
+            siren_command("GET_CCOUNT: scheduler-%l\n", &delta_cycles);
+            siren_command("TEST_EXECUTION_CCOUNT: %l, schedule\n", delta_cycles);
         }
-        siren_command("GET_CCOUNT: scheduler-%l\n", &delta_cycles);
-        siren_command("TEST_EXECUTION_CCOUNT: %l, schedule\n", delta_cycles);
         subtract_cycles_from_all();
     }
 }

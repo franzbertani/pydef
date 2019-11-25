@@ -28,6 +28,9 @@ long int __attribute__ ((persistent)) is_pruning = 0;
 long int __attribute__ ((persistent)) isSenseEnabled = 1;
 long int __attribute__ ((persistent)) slack = 0;
 long int __attribute__ ((persistent)) selected_app = 0;
+long int __attribute__ ((persistent)) under_counter[2] = {0,0};
+long int __attribute__ ((persistent)) over_counter[2] = {0,0};
+
 
 
 void activate_new_app();
@@ -94,7 +97,7 @@ END_TASK
 BEGIN_TASK_send
     siren_command("PRINTF: running SEND\n");
     int send_out;
-    __delay_cycles(90000);
+    __delay_cycles(300000);
     RETURN_send
 END_TASK
 
@@ -489,7 +492,7 @@ void reset_threshold(){
 }
 
 void increase_threshold(){
-    siren_command("INCREASE_THRESHOLD:\n");
+    /* siren_command("INCREASE_THRESHOLD:\n"); */
     return;
 }
 

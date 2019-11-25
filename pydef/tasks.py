@@ -325,6 +325,7 @@ class Tasks:
                 "ORIGINAL_DEADLINE", str(self.apps_dict[app_id].x_min))
             template = template.replace("TASK_ID", task_id)
             template = template.replace("APP_ID", app_id)
+            discount_parameter = self.config_dict.get("discount_parameter", 1)
             if(app_id == self.sorted_app_id_list[0]):
                 # I'm the final task of the first app
                 # in that case I set the slack to the time left to my deadline and
@@ -335,11 +336,24 @@ class Tasks:
                 # This parameter is somehow a measure of the energy source stability:
                 # an high value means that the source is subject to frequent drops,
                 # a low value means that the source is fairly stable.
-                discount_parameter = self.config_dict.get("discount_parameter", 1)
                 slack_update_instruction = "slack={}*slack + value;".format(discount_parameter)
                 template = template.replace("SLACK_UPDATE", slack_update_instruction)
+                template = template.replace("APP_NUMBER", str(self.sorted_app_id_list.index(app_id)))
+
+                # template = template.replace("UNDER_PARAM", str(0))
+                # template = template.replace("OVER_PARAM", '0')
+
+                template = template.replace("UNDER_PARAM", str(int(10 - discount_parameter*10)))
+                template = template.replace("OVER_PARAM", str(int(discount_parameter*10)))
             else:
                 #otherwise I have nothing to do with the slack
+                template = template.replace("APP_NUMBER", str(self.sorted_app_id_list.index(app_id)))
+
+                # template = template.replace("UNDER_PARAM", str(0))
+                # template = template.replace("OVER_PARAM", '0')
+
+                template = template.replace("UNDER_PARAM", str(int(10 - discount_parameter*10)))
+                template = template.replace("OVER_PARAM", str(int(discount_parameter*10)))
                 template = template.replace("SLACK_UPDATE", " ")
         return template
 

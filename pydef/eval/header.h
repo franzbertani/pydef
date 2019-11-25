@@ -341,19 +341,31 @@ void send();
 	long int value = task_struct_operate.deadline[task_struct_operate.deadlineVersion] - delta_cycles;	\
 		\
 	siren_command("PRINTF: updating tput after operate, value=%l\n", value);	\
-	slack=0.3*slack + value;	\
+	slack=0.9*slack + value;	\
 		\
 	if (value < 0 || slack < 0){	\
-	    siren_command("PRINTF: app_1 underperforming\n");	\
-	    app_struct_app_1.x_ok[!app_struct_app_1.x_okVersion & 0x1] = -1;	\
-	    app_struct_app_1.x_okVersion = !app_struct_app_1.x_okVersion & 0x1;	\
-	    manage_underperf();	\
+	    if(under_counter[0]<1){	\
+	        under_counter[0]++;	\
+	        over_counter[0] = 0;	\
+	    } else {	\
+	        under_counter[0] = 0;	\
+	        siren_command("PRINTF: app_1 underperforming\n");	\
+	        app_struct_app_1.x_ok[!app_struct_app_1.x_okVersion & 0x1] = -1;	\
+	        app_struct_app_1.x_okVersion = !app_struct_app_1.x_okVersion & 0x1;	\
+	        manage_underperf();	\
+	    }	\
 	} else if (value > 0 && slack>0) {	\
-	    siren_command("PRINTF: app_1 overperforming\n");	\
-	    app_struct_app_1.x_ok[!app_struct_app_1.x_okVersion & 0x1] = 1;	\
-	    app_struct_app_1.x_okVersion = !app_struct_app_1.x_okVersion & 0x1;	\
-	    if(selected_app==0 && selected_app<APPS_COUNT) selected_app++;	\
-	    manage_overperf();	\
+	    if(over_counter[0]<9){	\
+	        over_counter[0]++;	\
+	        under_counter[0] = 0;	\
+	    } else {	\
+	        over_counter[0]  = 0;	\
+	        siren_command("PRINTF: app_1 overperforming\n");	\
+	        app_struct_app_1.x_ok[!app_struct_app_1.x_okVersion & 0x1] = 1;	\
+	        app_struct_app_1.x_okVersion = !app_struct_app_1.x_okVersion & 0x1;	\
+	        if(selected_app==0 && selected_app<APPS_COUNT) selected_app++;	\
+	        manage_overperf();	\
+	    }	\
 	} else {	\
 	    siren_command("PRINTF: app_1 performance ok\n");	\
 	    app_struct_app_1.x_ok[!app_struct_app_1.x_okVersion & 0x1] = 0;	\
@@ -412,16 +424,28 @@ void send();
 	 	\
 		\
 	if (value < 0 || slack < 0){	\
-	    siren_command("PRINTF: app_2 underperforming\n");	\
-	    app_struct_app_2.x_ok[!app_struct_app_2.x_okVersion & 0x1] = -1;	\
-	    app_struct_app_2.x_okVersion = !app_struct_app_2.x_okVersion & 0x1;	\
-	    manage_underperf();	\
+	    if(under_counter[1]<1){	\
+	        under_counter[1]++;	\
+	        over_counter[1] = 0;	\
+	    } else {	\
+	        under_counter[1] = 0;	\
+	        siren_command("PRINTF: app_2 underperforming\n");	\
+	        app_struct_app_2.x_ok[!app_struct_app_2.x_okVersion & 0x1] = -1;	\
+	        app_struct_app_2.x_okVersion = !app_struct_app_2.x_okVersion & 0x1;	\
+	        manage_underperf();	\
+	    }	\
 	} else if (value > 0 && slack>0) {	\
-	    siren_command("PRINTF: app_2 overperforming\n");	\
-	    app_struct_app_2.x_ok[!app_struct_app_2.x_okVersion & 0x1] = 1;	\
-	    app_struct_app_2.x_okVersion = !app_struct_app_2.x_okVersion & 0x1;	\
-	    if(selected_app==0 && selected_app<APPS_COUNT) selected_app++;	\
-	    manage_overperf();	\
+	    if(over_counter[1]<9){	\
+	        over_counter[1]++;	\
+	        under_counter[1] = 0;	\
+	    } else {	\
+	        over_counter[1]  = 0;	\
+	        siren_command("PRINTF: app_2 overperforming\n");	\
+	        app_struct_app_2.x_ok[!app_struct_app_2.x_okVersion & 0x1] = 1;	\
+	        app_struct_app_2.x_okVersion = !app_struct_app_2.x_okVersion & 0x1;	\
+	        if(selected_app==0 && selected_app<APPS_COUNT) selected_app++;	\
+	        manage_overperf();	\
+	    }	\
 	} else {	\
 	    siren_command("PRINTF: app_2 performance ok\n");	\
 	    app_struct_app_2.x_ok[!app_struct_app_2.x_okVersion & 0x1] = 0;	\
@@ -434,7 +458,7 @@ void send();
 	task_struct_t __attribute__ ((persistent)) task_struct_median = {.e_wc = 33, .in_set = {&task_struct_sense}, .in_set_count = 1, .function_pointer = &median, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0, .marked_to_remove = {0x0,0x0}, .stopped=0, .app_pointer=NULL};	\
 	task_struct_t __attribute__ ((persistent)) task_struct_lowpass = {.e_wc = 51, .in_set = {&task_struct_median}, .in_set_count = 1, .function_pointer = &lowpass, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0, .marked_to_remove = {0x0,0x0}, .stopped=0, .app_pointer=NULL};	\
 	task_struct_t __attribute__ ((persistent)) task_struct_compress = {.e_wc = 21, .in_set = {&task_struct_lowpass}, .in_set_count = 1, .function_pointer = &compress, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0, .marked_to_remove = {0x0,0x0}, .stopped=0, .app_pointer=NULL};	\
-	task_struct_t __attribute__ ((persistent)) task_struct_send = {.e_wc = 91, .in_set = {&task_struct_compress}, .in_set_count = 1, .function_pointer = &send, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0, .marked_to_remove = {0x0,0x0}, .stopped=0, .app_pointer=NULL};	\
+	task_struct_t __attribute__ ((persistent)) task_struct_send = {.e_wc = 301, .in_set = {&task_struct_compress}, .in_set_count = 1, .function_pointer = &send, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0, .marked_to_remove = {0x0,0x0}, .stopped=0, .app_pointer=NULL};	\
 	task_struct_t __attribute__ ((persistent)) task_struct_magnitude = {.e_wc = 16, .in_set = {&task_struct_lowpass}, .in_set_count = 1, .function_pointer = &magnitude, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0, .marked_to_remove = {0x0,0x0}, .stopped=0, .app_pointer=NULL};	\
 	task_struct_t __attribute__ ((persistent)) task_struct_classify = {.e_wc = 16, .in_set = {&task_struct_magnitude}, .in_set_count = 1, .function_pointer = &classify, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0, .marked_to_remove = {0x0,0x0}, .stopped=0, .app_pointer=NULL};	\
 	task_struct_t __attribute__ ((persistent)) task_struct_operate = {.e_wc = 31, .in_set = {&task_struct_classify}, .in_set_count = 1, .function_pointer = &operate, .isEnabled = {0x0,0x0}, .isEnabledVersion = 0x0, .isActive = {0x0,0x0}, .isActiveVersion = 0x0, .deadlineVersion = 0x0, .marked_to_remove = {0x0,0x0}, .stopped=0, .app_pointer=NULL};
