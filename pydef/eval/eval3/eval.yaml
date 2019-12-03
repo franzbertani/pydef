@@ -1,0 +1,111 @@
+TASKS:
+    - id: sense
+      in_set: []
+      output:
+          name: sense_out
+          type: acc_struct_t 30
+      mids: 20
+      e_bc: 20
+      e_wc: 81
+    - id: median
+      in_set:
+          - task_id: sense
+            dependency_type: w10
+      output:
+        name: median_out
+        type: acc_struct_t*
+      e_bc: 15
+      e_wc: 33
+    - id: lowpass
+      in_set:
+          - task_id: median
+            dependency_type: simple
+      output:
+          name: lowpass_out
+          type: acc_struct_t*
+      e_bc: 15
+      e_wc: 51
+    - id: magnitude
+      in_set:
+          - task_id: lowpass
+            dependency_type: simple
+      output:
+          name: magnitude_out
+          type: acc_struct_t*
+      e_bc: 15
+      e_wc: 16
+    - id: classify
+      in_set:
+          - task_id: magnitude
+            dependency_type: simple
+      output:
+          name: classify_out
+          type: int
+      e_bc: 15
+      e_wc: 16
+    - id: operate
+      in_set:
+          - task_id: classify
+            dependency_type: simple
+      output:
+          name: operate_out
+          type: int
+      e_bc: 15
+      e_wc: 31
+    - id: compress
+      in_set:
+          - task_id: lowpass
+            dependency_type: simple
+      output:
+          name: compress_out
+          type: acc_struct_t*
+      e_bc: 15
+      e_wc: 16
+    - id: send
+      in_set:
+          - task_id: compress
+            dependency_type: 1r
+      output:
+          name: send_out
+          type: int
+      e_bc: 15
+      e_wc: 91
+    - id: sense_temp
+      in_set: []
+      output:
+          name: sense_temp_out
+          type: int
+      e_bc: 15
+      e_wc: 16
+    - id: temp_avg
+      in_set:
+          - task_id: sense_temp
+            dependency_type: 1r
+      output:
+          name: temp_avg_out
+          type: int
+      e_bc: 15
+      e_wc: 16
+
+
+APPLICATIONS:
+    - id: app_1
+      tasks: [sense, median, lowpass, magnitude, classify, operate]
+      initial_task: sense
+      final_task: operate
+      x_min: 3
+    - id: app_2
+      tasks: [sense_temp, temp_avg]
+      initial_task: sense_temp
+      final_task: temp_avg
+      x_min: 2
+    - id: app_3
+      tasks: [compress, send]
+      initial_task: compress
+      final_task: send
+      x_min: 1
+
+HEADER PREFIX:
+    - path: "eval/acc_struct_t.h"
+
+discount_parameter: 0.2

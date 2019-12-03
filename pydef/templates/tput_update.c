@@ -23,7 +23,7 @@ if (value < 0 || slack < 0){
         siren_command("PRINTF: APP_ID overperforming\n");
         app_struct_APP_ID.x_ok[!app_struct_APP_ID.x_okVersion & 0x1] = 1;
         app_struct_APP_ID.x_okVersion = !app_struct_APP_ID.x_okVersion & 0x1;
-        if(selected_app==0 && selected_app<APPS_COUNT) selected_app++;
+        if(selected_app<APPS_COUNT-1) selected_app++;
         manage_overperf();
     }
 } else {

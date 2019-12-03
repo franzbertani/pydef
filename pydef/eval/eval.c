@@ -63,6 +63,7 @@ BEGIN_TASK_lowpass
     siren_command("PRINTF: running LOWPASS\n");
     acc_struct_t* lowpass_out;
     __delay_cycles(50000);
+    task_struct_compress.stopped = 0;
     RETURN_lowpass
 END_TASK
 
@@ -91,13 +92,16 @@ BEGIN_TASK_compress
     siren_command("PRINTF: running COMPRESS\n");
     int compress_out;
     __delay_cycles(20000);
+    task_struct_compress.stopped = 1;
+    task_struct_send.stopped = 0;
     RETURN_compress
 END_TASK
 
 BEGIN_TASK_send
     siren_command("PRINTF: running SEND\n");
     int send_out;
-    __delay_cycles(300000);
+    __delay_cycles(90000);
+    task_struct_send.stopped = 1;
     RETURN_send
 END_TASK
 

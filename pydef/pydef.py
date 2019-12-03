@@ -1,12 +1,13 @@
 import yaml
 import sys
+import warnings
 
 from headergen import Header
 import networkx as nx
 from matplotlib import pyplot as plt
 from tasks import Tasks
 from applications import Applications
-
+warnings.filterwarnings("ignore", category=UserWarning)
 
 def read_yaml_file(file_path):
     """Build a dictionary from the YAML config file
