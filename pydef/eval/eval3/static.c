@@ -28,7 +28,7 @@ long int __attribute__ ((persistent)) is_pruning = 0;
 long int __attribute__ ((persistent)) isSenseEnabled = 1;
 long int __attribute__ ((persistent)) slack = 0;
 long int __attribute__ ((persistent)) selected_app = 0;
-task_struct_t* __attribute ((persistent)) ordered_tasks_array[18] = {
+task_struct_t* __attribute ((persistent)) ordered_tasks_array[24] = {
     &task_struct_sense,
     &task_struct_median,
     &task_struct_lowpass,
@@ -46,7 +46,14 @@ task_struct_t* __attribute ((persistent)) ordered_tasks_array[18] = {
     &task_struct_lowpass,
     &task_struct_magnitude,
     &task_struct_classify,
-    &task_struct_operate};
+    &task_struct_operate,
+    &task_struct_sense_temp,
+    &task_struct_temp_avg,
+    &task_struct_sense_temp,
+    &task_struct_temp_avg,
+    &task_struct_compress,
+    &task_struct_send};
+
 long int __attribute__ ((persistent)) over_counter[2] = {0,0};
 long int __attribute__ ((persistent)) under_counter[2] = {0,0};
 
@@ -109,15 +116,30 @@ END_TASK
 BEGIN_TASK_compress
     siren_command("PRINTF: running COMPRESS\n");
     int compress_out;
-    __delay_cycles(20000);
+    __delay_cycles(15000);
     RETURN_compress
 END_TASK
 
 BEGIN_TASK_send
     siren_command("PRINTF: running SEND\n");
     int send_out;
-    __delay_cycles(300000);
+    __delay_cycles(90000);
     RETURN_send
+END_TASK
+
+BEGIN_TASK_sense_temp
+    siren_command("PRINTF: running SENSE TEMP\n");
+    int sense_temp_out;
+    __delay_cycles(15000);
+    siren_command("START_TIME: misd(TEMP)\n");
+    RETURN_sense_temp
+END_TASK
+
+BEGIN_TASK_temp_avg
+    siren_command("PRINTF: running TEMP AVG\n");
+    int temp_avg_out;
+    __delay_cycles(15000);
+    RETURN_temp_avg
 END_TASK
 
 TASKS_STRUCTS
@@ -204,10 +226,12 @@ void scheduler(){
             }
             if(next_task_struct.function_pointer == task_struct_operate.function_pointer){
                 siren_command("LOG_EVENT: app_1 done\n");
-            } else if(next_task_struct.function_pointer == task_struct_send.function_pointer){
+            } else if(next_task_struct.function_pointer == task_struct_temp_avg.function_pointer){
                 siren_command("LOG_EVENT: app_2 done\n");
+            } else if(next_task_struct.function_pointer == task_struct_send.function_pointer){
+                    siren_command("LOG_EVENT: app_3 done\n");
             }
-            next_task = (next_task+1)%18;
+            next_task = (next_task+1)%24;
             siren_command("GET_CCOUNT: scheduler-%l\n", &delta_cycles);
             siren_command("TEST_EXECUTION_CCOUNT: %l, schedule\n", delta_cycles);
         }

@@ -340,7 +340,7 @@ class Tasks:
                 template = template.replace("SLACK_UPDATE", slack_update_instruction)
                 template = template.replace("APP_NUMBER", str(self.sorted_app_id_list.index(app_id)))
 
-                # template = template.replace("UNDER_PARAM", str(1))
+                # template = template.replace("UNDER_PARAM", '0')
                 # template = template.replace("OVER_PARAM", '0')
 
                 template = template.replace("UNDER_PARAM", str(int(10 - discount_parameter*10)))
@@ -349,7 +349,7 @@ class Tasks:
                 #otherwise I have nothing to do with the slack
                 template = template.replace("APP_NUMBER", str(self.sorted_app_id_list.index(app_id)))
 
-                # template = template.replace("UNDER_PARAM", str(1))
+                # template = template.replace("UNDER_PARAM", '0')
                 # template = template.replace("OVER_PARAM", '0')
 
                 template = template.replace("UNDER_PARAM", str(int(10 - discount_parameter*10)))

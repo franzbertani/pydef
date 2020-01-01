@@ -76,7 +76,7 @@ APPLICATIONS:
       tasks: [sense, median, lowpass, magnitude, classify, operate]
       initial_task: sense
       final_task: operate
-      x_min: 3
+      x_min: 2
     - id: app_2
       tasks: [compress, send]
       initial_task: compress
@@ -86,5 +86,5 @@ APPLICATIONS:
 HEADER PREFIX:
     - path: "eval/acc_struct_t.h"
 
-discount_parameter: 1
+discount_parameter: 0
 

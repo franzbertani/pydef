@@ -28,7 +28,7 @@ long int __attribute__ ((persistent)) is_pruning = 0;
 long int __attribute__ ((persistent)) isSenseEnabled = 1;
 long int __attribute__ ((persistent)) slack = 0;
 long int __attribute__ ((persistent)) selected_app = 0;
-task_struct_t* __attribute ((persistent)) ordered_tasks_array[18] = {
+task_struct_t* __attribute ((persistent)) ordered_tasks_array[22] = {
     &task_struct_sense,
     &task_struct_median,
     &task_struct_lowpass,
@@ -46,7 +46,11 @@ task_struct_t* __attribute ((persistent)) ordered_tasks_array[18] = {
     &task_struct_lowpass,
     &task_struct_magnitude,
     &task_struct_classify,
-    &task_struct_operate};
+    &task_struct_operate,
+    &task_struct_compress,
+    &task_struct_send,
+    &task_struct_compress,
+    &task_struct_send};
 long int __attribute__ ((persistent)) over_counter[2] = {0,0};
 long int __attribute__ ((persistent)) under_counter[2] = {0,0};
 
@@ -116,7 +120,7 @@ END_TASK
 BEGIN_TASK_send
     siren_command("PRINTF: running SEND\n");
     int send_out;
-    __delay_cycles(300000);
+    __delay_cycles(90000);
     RETURN_send
 END_TASK
 
@@ -207,7 +211,7 @@ void scheduler(){
             } else if(next_task_struct.function_pointer == task_struct_send.function_pointer){
                 siren_command("LOG_EVENT: app_2 done\n");
             }
-            next_task = (next_task+1)%18;
+            next_task = (next_task+1)%22;
             siren_command("GET_CCOUNT: scheduler-%l\n", &delta_cycles);
             siren_command("TEST_EXECUTION_CCOUNT: %l, schedule\n", delta_cycles);
         }
